@@ -20,7 +20,7 @@ import utexture
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, '..', 'gamedata')
 log = print
-DATA_VERSION = 1  # bump when the layout of gamedata/ changes
+DATA_VERSION = 2  # bump when the layout of gamedata/ changes
 LANGS = ['en-US', 'ru', 'uk', 'de', 'fr', 'es', 'it', 'pl', 'pt-BR', 'tr', 'ja', 'ko', 'zh-CN', 'zh-TW']
 LANG_KEY = {'en-US': 'en'}
 
