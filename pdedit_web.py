@@ -155,6 +155,22 @@ class App:
 
     def load_gamedata(self):
         self.gd = pdmodel.load_gamedata() if self.gamedata_ready() else None
+        self.game_version = self.read_game_version() if self.gd else {}
+
+    def read_game_version(self):
+        # data extracted by older editors has no version -> read it from the game once and remember it
+        path = os.path.join(self.gamedata, 'meta.json')
+        try:
+            with open(path) as f:
+                meta = json.load(f)
+            if 'gameVersion' not in meta:
+                import upak
+                meta['gameVersion'], meta['gameBuild'] = build_gamedata.game_version(upak.PakSet(build_gamedata.find_paks(meta['game'])))
+                with open(path, 'w') as f:
+                    json.dump(meta, f)
+            return {'version': meta['gameVersion'], 'build': meta.get('gameBuild', '')}
+        except Exception:  # noqa: BLE001 - game moved or unreadable: version unknown
+            return {}
 
     def saves(self):
         out = []
@@ -389,7 +405,7 @@ class Handler(SimpleHTTPRequestHandler):
         elif path == '/api/gamedata':
             self.app.page_loaded = True
             gd = self.app.gd
-            return self.send_json(200, dict(gd, version=__version__) if gd else {'missing': True, 'version': __version__})
+            return self.send_json(200, dict(gd, version=__version__, game=self.app.game_version) if gd else {'missing': True, 'version': __version__})
         elif not (path.startswith('/web/') or path.startswith('/gamedata/')):
             return self.send_error(404)
         return super().do_GET()
@@ -491,7 +507,7 @@ def open_window(url, app):
     # on Windows the window takes the icon embedded in the exe anyway
     icon = None if os.name == 'nt' else os.path.join(RES, 'web', 'icon.png')
     try:
-        webview.start(gui=gui, private_mode=False, storage_path=os.path.join(app.data_dir, 'webview'),
+        webview.start(gui=gui, private_mode=False, storage_path=os.path.join(app.data_dir, 'webview-cache'),
                       icon=icon)
     except Exception as e:  # noqa: BLE001 - fall back to the browser
         print('Native window is not available (%s); using the web browser instead.' % e)

@@ -399,3 +399,16 @@ button[disabled] { opacity: .4; cursor: default; }
 .leg-anchors { position: absolute; top: -16px; left: -12px; font-size: 13px; background: #20262a; color: #cfe; padding: 0 3px; pointer-events: none; }
 .field-row.unset .fl { opacity: .55; }
 .node-panel select { width: 100%; max-width: 100%; }
+
+/* start-up notice */
+.notice { z-index: 95; }
+.notice-card { line-height: 1.5; }
+.notice-card h2 { margin-top: 0; color: var(--accent, #f0b03c); }
+.notice-card ul { margin: 0 0 8px; padding-left: 22px; }
+.notice-card a { color: var(--accent, #f0b03c); }
+.notice-card .ok { color: var(--ok); }
+.notice-card .warn { color: #f08a5d; }
+.notice-strong { font-weight: bold; color: #f08a5d; }
+.notice-advice { border-left: 3px solid var(--accent, #f0b03c); padding-left: 10px; }
+.notice-thanks { margin-top: 14px; }
+.notice-foot { justify-content: space-between; gap: 12px; margin-top: 12px; flex-wrap: wrap; }

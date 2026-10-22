@@ -116,6 +116,14 @@ def main():
     build(game, OUT)
 
 
+def game_version(paks):
+    """ProjectVersion / BuildNumber from the game's DefaultGame.ini, e.g. ('1.15.0', '245')."""
+    ini = paks.read('PenDriverPro/Config/DefaultGame.ini').decode('utf-8', 'replace')
+    ver = re.search(r'^ProjectVersion=(.+?)\s*$', ini, re.M)
+    num = re.search(r'^BuildNumber=(.+?)\s*$', ini, re.M)
+    return (ver.group(1) if ver else ''), (num.group(1) if num else '')
+
+
 def build(game, out_dir, logger=print):
     """Extract everything the editor needs from the game install into out_dir."""
     global OUT, log
@@ -785,7 +793,8 @@ def build(game, out_dir, logger=print):
     with open(os.path.join(OUT, 'langs.json'), 'w') as fh:
         json.dump([lk(l) for l in LANGS], fh)
     with open(os.path.join(OUT, 'meta.json'), 'w') as fh:
-        json.dump({'version': DATA_VERSION, 'game': os.path.abspath(game)}, fh)
+        gv, gb = game_version(paks)
+        json.dump({'version': DATA_VERSION, 'game': os.path.abspath(game), 'gameVersion': gv, 'gameBuild': gb}, fh)
     log('done ->', os.path.abspath(OUT))
 
 

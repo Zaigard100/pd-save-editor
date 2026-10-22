@@ -14,3 +14,4 @@ dist/
 settings.json
 pdsave-editor.log*
 webview/
+webview-cache/

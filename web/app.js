@@ -255,6 +255,79 @@ function toast(msg, err = false) {
   toast.tm = setTimeout(() => el.classList.add('hidden'), err ? 6000 : 3500);
 }
 
+// ------------------------------------------------------------------ start-up notice
+const REPO_URL = 'https://github.com/Zaigard100/pd-save-editor';
+const TESTED_GAME = { version: '1.15.0', build: '245' };
+const NOTICE_YEAR = 2026;
+const NOTICE = {
+  ru: {
+    title: '⚠ Прежде чем начать',
+    risk: 'Это неофициальный фанатский редактор. Некоторые его функции могут сломать сохранение: игра не загрузит его или поведёт себя странно.',
+    backup: 'Обязательно сделайте резервную копию сохранений, если они вам дороги.',
+    backup2: 'Редактор сам делает копию при каждом сохранении, но надёжнее скопировать папку с сохранениями вручную (кнопка «Папка…» показывает, где она).',
+    safeTitle: 'Относительно безопасно:',
+    safe: ['выдавать себе предметы', 'редактировать предметы — прочность, заряды, эффекты', 'менять энергию якорей', 'открывать записи журнала'],
+    rest: 'Всё остальное (исследования, улучшения, машина, карта, парадоксы, статистика) меняйте осторожно — это лучше делать внутри игры.',
+    advice: 'А лучше честно пройдите игру сами: так вы получите гораздо больше удовольствия и от прокачки, и от самой игры. С редактором можно поиграться после прохождения, когда машина полностью покрыта олимпием и стоят топовые модули, — для фана и экспериментов.',
+    verTitle: 'Версия игры',
+    tested: (v, b) => `Редактор проверен на Pacific Drive ${v} (сборка ${b}). Обновления игры могут изменить формат сохранений и упаковку игровых файлов — стабильная работа гарантируется только на этой версии.`,
+    yours: 'Ваша версия игры:', unknown: 'не удалось определить', same: 'совпадает ✓', differs: 'отличается — будьте особенно осторожны',
+    thanks: 'Спасибо, что пользуетесь редактором! Pacific Drive — игра Ironwood Studios; редактор не связан с разработчиками игры.',
+    repo: 'Исходный код и новые версии:', dontShow: 'Больше не показывать до следующей версии редактора', ok: 'Понятно',
+  },
+  en: {
+    title: '⚠ Before you start',
+    risk: 'This is an unofficial fan-made editor. Some of its features can break a save: the game may refuse to load it or behave strangely.',
+    backup: 'Make a backup of your saves if they matter to you.',
+    backup2: 'The editor keeps a copy on every save, but copying the save folder yourself is safer (the "Folder…" button shows where it is).',
+    safeTitle: 'Reasonably safe:',
+    safe: ['giving yourself items', 'editing items — durability, charges, effects', 'changing anchor energy', 'unlocking logbook entries'],
+    rest: 'Everything else (research, upgrades, the car, the map, quirks, statistics) — change with care; it is better done inside the game.',
+    advice: 'Better yet, play the game honestly yourself: progression and the game itself are far more rewarding that way. Play with the editor after finishing the game, once the car is fully covered in Olympium and has top-tier modules — for fun and experiments.',
+    verTitle: 'Game version',
+    tested: (v, b) => `The editor is tested on Pacific Drive ${v} (build ${b}). Game updates can change the save format and how game files are packed — stable work is only expected on this version.`,
+    yours: 'Your game version:', unknown: 'could not be detected', same: 'matches ✓', differs: 'differs — be extra careful',
+    thanks: 'Thank you for using the editor! Pacific Drive is a game by Ironwood Studios; this editor is not affiliated with the developers.',
+    repo: 'Source code and new versions:', dontShow: "Don't show again until the next editor version", ok: 'Got it',
+  },
+};
+
+function showNotice(force = false) {
+  const key = 'pd_notice_ack';
+  let acked = null;
+  try { acked = localStorage.getItem(key); } catch (e) { /* storage blocked */ }
+  if (!force && acked === String(GD && GD.version)) return;
+  const N = NOTICE[ruish() ? 'ru' : 'en'];
+  const gv = (GD && GD.game) || {};
+  const same = gv.version === TESTED_GAME.version;
+  const box = $('#notice');
+  const dont = h('input', { type: 'checkbox', checked: acked === String(GD && GD.version) });
+  const close = () => {
+    try { if (dont.checked) localStorage.setItem(key, String(GD && GD.version)); else localStorage.removeItem(key); } catch (e) { /* storage blocked */ }
+    box.classList.add('hidden');
+  };
+  box.innerHTML = '';
+  box.append(h('div', { class: 'panel setup-card notice-card' },
+    h('h2', {}, N.title),
+    h('p', {}, N.risk),
+    h('p', { class: 'notice-strong' }, N.backup),
+    h('p', { class: 'hint' }, N.backup2),
+    h('p', {}, N.safeTitle),
+    h('ul', {}, N.safe.map(x => h('li', {}, x))),
+    h('p', {}, N.rest),
+    h('p', { class: 'notice-advice' }, N.advice),
+    h('h3', {}, N.verTitle),
+    h('p', {}, N.tested(TESTED_GAME.version, TESTED_GAME.build)),
+    h('p', {}, N.yours + ' ', gv.version
+      ? h('b', { class: same ? 'ok' : 'warn' }, `${gv.version}${gv.build ? ` (${gv.build})` : ''} — ${same ? N.same : N.differs}`)
+      : h('b', { class: 'warn' }, N.unknown)),
+    h('p', { class: 'notice-thanks' }, N.thanks),
+    h('p', {}, N.repo + ' ', h('a', { href: REPO_URL, target: '_blank', rel: 'noopener' }, REPO_URL.replace('https://', ''))),
+    h('p', { class: 'hint' }, `PD Save Editor ${(GD && GD.version) || ''} · © ${NOTICE_YEAR}`),
+    h('div', { class: 'row notice-foot' }, h('label', { class: 'row' }, dont, ' ' + N.dontShow), h('button', { class: 'primary', onclick: close }, N.ok))));
+  box.classList.remove('hidden');
+}
+
 // ------------------------------------------------------------------ boot
 async function boot() {
   GD = await (await fetch('/api/gamedata')).json();
@@ -264,6 +337,8 @@ async function boot() {
     document.body.innerHTML = '';
     document.body.append(h('div', { class: 'empty', style: 'margin-top:20vh;font-size:18px' }, t('bye')));
   };
+  $('#btnAbout').onclick = () => showNotice(true);
+  showNotice();
   if (GD.missing) { applyStatic(); return showSetup(); }
   document.title = `Pacific Drive — ${t('editor').replace('// ', '')} ${GD.version || ''}`;
   if (!GD.langs.includes(lang) && !UI[lang]) lang = 'en';
