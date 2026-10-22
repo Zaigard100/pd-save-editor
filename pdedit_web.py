@@ -487,9 +487,12 @@ def open_window(url, app):
             pass
     threading.Thread(target=watchdog, daemon=True).start()
     gui = 'qt' if sys.platform.startswith('linux') else None
+    # WinForms only accepts .ico here and kills the process on a .png (uncatchable .NET exception);
+    # on Windows the window takes the icon embedded in the exe anyway
+    icon = None if os.name == 'nt' else os.path.join(RES, 'web', 'icon.png')
     try:
         webview.start(gui=gui, private_mode=False, storage_path=os.path.join(app.data_dir, 'webview'),
-                      icon=os.path.join(RES, 'web', 'icon.png'))
+                      icon=icon)
     except Exception as e:  # noqa: BLE001 - fall back to the browser
         print('Native window is not available (%s); using the web browser instead.' % e)
         app.window = None
