@@ -1,8 +1,7 @@
 PD Save Editor — диагностика на Windows
 =======================================
 
-1. Положите в эту папку PDSaveEditor-windows-x64-debug.exe (отладочная версия с консолью)
-   или обычный PDSaveEditor-windows-x64.exe — со страницы Releases / Actions на GitHub.
+1. Положите в эту папку PDSaveEditor-windows-x64.exe — со страницы Releases на GitHub.
    Если exe лежит в «Загрузках», скрипт найдёт его и там.
 
 2. cleanup.bat  — уборщик: закрывает редактор и удаляет его служебные данные

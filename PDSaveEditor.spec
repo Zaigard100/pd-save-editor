@@ -7,10 +7,9 @@ import sys
 
 ONEDIR = os.environ.get('PDSAVE_ONEDIR') == '1'
 ICON = os.path.join('packaging', 'icon.png')
-# Windows build is a windowed app (log goes to a file); PDSAVE_CONSOLE=1 makes the console debug build
-DEBUG_BUILD = os.environ.get('PDSAVE_CONSOLE') == '1'
-CONSOLE = sys.platform != 'win32' or DEBUG_BUILD
-NAME = 'PDSaveEditor-debug' if DEBUG_BUILD else 'PDSaveEditor'
+# Windows build is a windowed app (log goes to a file)
+CONSOLE = sys.platform != 'win32'
+NAME = 'PDSaveEditor'
 
 # native window: WebView2 (Edge) on Windows, Qt WebEngine on Linux; the app falls back to the browser
 WINDOW_IMPORTS = ['webview', 'webview.platforms.edgechromium', 'clr'] if sys.platform == 'win32' else [
