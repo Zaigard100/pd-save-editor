@@ -7,7 +7,10 @@ import sys
 
 ONEDIR = os.environ.get('PDSAVE_ONEDIR') == '1'
 ICON = os.path.join('packaging', 'icon.png')
-CONSOLE = sys.platform != 'win32'   # Windows build is a windowed app (log goes to a file)
+# Windows build is a windowed app (log goes to a file); PDSAVE_CONSOLE=1 makes the console debug build
+DEBUG_BUILD = os.environ.get('PDSAVE_CONSOLE') == '1'
+CONSOLE = sys.platform != 'win32' or DEBUG_BUILD
+NAME = 'PDSaveEditor-debug' if DEBUG_BUILD else 'PDSaveEditor'
 
 # native window: WebView2 (Edge) on Windows, Qt WebEngine on Linux; the app falls back to the browser
 WINDOW_IMPORTS = ['webview', 'webview.platforms.edgechromium', 'clr'] if sys.platform == 'win32' else [
@@ -72,9 +75,9 @@ if sys.platform.startswith('linux'):
 pyz = PYZ(a.pure)
 
 if ONEDIR:
-    exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name='PDSaveEditor',
+    exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name=NAME,
               console=CONSOLE, upx=False, strip=False, debug=False, icon=ICON)
-    coll = COLLECT(exe, a.binaries, a.datas, name='PDSaveEditor', upx=False, strip=False)
+    coll = COLLECT(exe, a.binaries, a.datas, name=NAME, upx=False, strip=False)
 else:
-    exe = EXE(pyz, a.scripts, a.binaries, a.datas, [], name='PDSaveEditor',
+    exe = EXE(pyz, a.scripts, a.binaries, a.datas, [], name=NAME,
               console=CONSOLE, upx=False, strip=False, debug=False, icon=ICON)

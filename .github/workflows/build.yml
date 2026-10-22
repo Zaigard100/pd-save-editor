@@ -50,9 +50,12 @@ jobs:
           printf '"""Version of the editor; CI overwrites this file from the git tag."""\n__version__ = "%s"\n' "$V" > version.py
           cat version.py
 
-      - name: Build (Windows, one file)
+      - name: Build (Windows, one file + console debug build)
         if: runner.os == 'Windows'
-        run: pyinstaller --noconfirm PDSaveEditor.spec
+        shell: bash
+        run: |
+          pyinstaller --noconfirm PDSaveEditor.spec
+          PDSAVE_CONSOLE=1 pyinstaller --noconfirm PDSaveEditor.spec
 
       - name: Build (Linux, folder for the AppImage)
         if: runner.os == 'Linux'
@@ -68,20 +71,22 @@ jobs:
       - name: Smoke test
         shell: bash
         run: |
-          if [[ "$RUNNER_OS" == "Windows" ]]; then dist/PDSaveEditor.exe --version
+          if [[ "$RUNNER_OS" == "Windows" ]]; then dist/PDSaveEditor.exe --version; dist/PDSaveEditor-debug.exe --version
           else APPIMAGE_EXTRACT_AND_RUN=1 dist/PDSaveEditor-x86_64.AppImage --version; fi
 
       - name: Package
         shell: bash
         run: |
           mkdir -p out
-          if [[ "$RUNNER_OS" == "Windows" ]]; then cp dist/PDSaveEditor.exe "out/${{ matrix.asset }}"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            cp dist/PDSaveEditor.exe "out/${{ matrix.asset }}"
+            cp dist/PDSaveEditor-debug.exe out/PDSaveEditor-windows-x64-debug.exe
           else cp dist/PDSaveEditor-x86_64.AppImage "out/${{ matrix.asset }}"; fi
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset }}
-          path: out/${{ matrix.asset }}
+          path: out/*
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')

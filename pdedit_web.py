@@ -561,10 +561,25 @@ def main():
     ap.add_argument('--no-browser', action='store_true', help='only start the server (no window, no browser)')
     ap.add_argument('--browser', action='store_true', help='open in the web browser instead of an app window')
     ap.add_argument('--data', help='folder for extracted game data (default: user data folder)')
+    ap.add_argument('--debug', action='store_true', help='verbose log (also PDSAVE_DEBUG=1)')
     ap.add_argument('--version', action='version', version=__version__)
     a = ap.parse_args()
+    if a.debug:
+        os.environ['PDSAVE_DEBUG'] = '1'
     if getattr(sys, 'frozen', False) or sys.stdout is None:
         setup_log_file()
+    if os.environ.get('PDSAVE_DEBUG'):
+        import logging
+        import platform
+        logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(asctime)s %(name)s %(levelname)s %(message)s')
+        logging.getLogger('pywebview').setLevel(logging.DEBUG)
+        print('debug: python %s, %s, frozen=%s, exe=%s' % (platform.python_version(), platform.platform(),
+                                                          getattr(sys, 'frozen', False), sys.executable))
+        try:
+            import webview
+            print('debug: pywebview %s' % getattr(webview, '__version__', '?'))
+        except Exception as e:  # noqa: BLE001
+            print('debug: pywebview import failed: %r' % e)
     # running from a source checkout with gamedata/ next to the code keeps using it
     data_dir = a.data or (HERE if not getattr(sys, 'frozen', False) and os.path.isfile(os.path.join(HERE, 'gamedata', 'meta.json'))
                           else user_data_dir())
