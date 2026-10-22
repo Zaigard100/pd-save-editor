@@ -37,7 +37,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install pyinstaller==6.11.1 pillow==11.0.0
+      - run: pip install pyinstaller==6.11.1 pillow==11.0.0 pywebview==6.2.1
+
+      - name: Window dependencies (Linux, Qt WebEngine)
+        if: runner.os == 'Linux'
+        run: pip install PyQt6==6.11.0 PyQt6-WebEngine==6.11.0 qtpy==2.4.3
 
       - name: Stamp version
         shell: bash

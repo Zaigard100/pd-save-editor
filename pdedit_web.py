@@ -132,6 +132,7 @@ class App:
         self.model = None
         self.setup = {'running': False, 'log': [], 'error': None}
         self.server = None
+        self.window = None
         self.load_gamedata()
 
     def gamedata_ready(self):
@@ -200,7 +201,9 @@ class App:
         if op == 'setup_build':
             return self.setup_start(a['game'])
         if op == 'quit':
-            if self.server:
+            if self.window is not None:
+                threading.Timer(0.3, self.window.destroy).start()    # closing the window stops everything
+            elif self.server:
                 threading.Timer(0.3, self.server.shutdown).start()   # let the response go out first
             return {'bye': True}
         if self.gd is None:
@@ -296,7 +299,8 @@ class Handler(SimpleHTTPRequestHandler):
         '.ttf': 'font/ttf', '.otf': 'font/otf', '.html': 'text/html'})
 
     def log_message(self, fmt, *args):
-        pass
+        if os.environ.get('PDSAVE_DEBUG'):
+            sys.stderr.write('%s\n' % (fmt % args))
 
     def translate_path(self, path):
         p = urlparse(path).path
@@ -381,14 +385,65 @@ def make_server(port):
     return ThreadingHTTPServer(('127.0.0.1', 0), Handler), None
 
 
+WINDOW_TEXT = {
+    'ru': ('Есть несохранённые изменения', 'Закрыть редактор без сохранения?'),
+    'en': ('Unsaved changes', 'Close the editor without saving?'),
+}
+
+
+def open_window(url, app):
+    """Show the editor in its own window (WebView2 on Windows, Qt WebEngine on Linux).
+    Blocks until the window is closed. Returns False when no native window is available."""
+    try:
+        import webview
+    except ImportError:
+        return False
+    if getattr(sys, 'frozen', False) and sys.platform.startswith('linux'):
+        # bundled Chromium cannot always set up its sandbox inside an AppImage; the page is our own localhost UI
+        os.environ.setdefault('QTWEBENGINE_DISABLE_SANDBOX', '1')
+    lang = 'ru' if (os.environ.get('LANG', '') + os.environ.get('LANGUAGE', '')).lower().startswith(('ru', 'uk')) else 'en'
+    try:
+        import locale
+        if os.name == 'nt' and (locale.getdefaultlocale()[0] or '').lower().startswith(('ru', 'uk')):
+            lang = 'ru'
+    except Exception:  # noqa: BLE001
+        pass
+    win = webview.create_window('PD Save Editor %s' % __version__, url, width=1500, height=950,
+                                min_size=(1000, 680), background_color='#121513', text_select=True)
+    app.window = win
+
+    def on_closing():
+        m = app.model
+        if m is not None and m.dirty:
+            title, text = WINDOW_TEXT[lang]
+            return bool(win.create_confirmation_dialog(title, text))
+        return True
+    win.events.closing += on_closing
+    gui = 'qt' if sys.platform.startswith('linux') else None
+    try:
+        webview.start(gui=gui, private_mode=False, storage_path=os.path.join(app.data_dir, 'webview'),
+                      icon=os.path.join(RES, 'web', 'icon.png'))
+    except Exception as e:  # noqa: BLE001 - fall back to the browser
+        print('Native window is not available (%s); using the web browser instead.' % e)
+        app.window = None
+        return False
+    return True
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('target', nargs='?', help='save folder or .sav file')
     ap.add_argument('--port', type=int, default=8765)
-    ap.add_argument('--no-browser', action='store_true')
+    ap.add_argument('--no-browser', action='store_true', help='only start the server (no window, no browser)')
+    ap.add_argument('--browser', action='store_true', help='open in the web browser instead of an app window')
     ap.add_argument('--data', help='folder for extracted game data (default: user data folder)')
     ap.add_argument('--version', action='version', version=__version__)
     a = ap.parse_args()
+    if sys.stdout is None or sys.stderr is None:      # windowed build (no console): log to a file
+        os.makedirs(user_data_dir(), exist_ok=True)
+        log = open(os.path.join(user_data_dir(), 'pdsave-editor.log'), 'a', encoding='utf-8', buffering=1)
+        sys.stdout = sys.stdout or log
+        sys.stderr = sys.stderr or log
     # running from a source checkout with gamedata/ next to the code keeps using it
     data_dir = a.data or (HERE if not getattr(sys, 'frozen', False) and os.path.isfile(os.path.join(HERE, 'gamedata', 'meta.json'))
                           else user_data_dir())
@@ -402,14 +457,20 @@ def main():
     url = 'http://127.0.0.1:%d/' % srv.server_address[1]
     print('Pacific Drive save editor %s: %s' % (__version__, url))
     print('Game data: %s' % app.gamedata)
+    server_thread = threading.Thread(target=srv.serve_forever, daemon=True)
+    server_thread.start()
+    if not a.no_browser and not a.browser and open_window(url, app):
+        srv.shutdown()          # the window was closed
+        return
     print('Close this window (or press "Exit" in the editor) to stop.')
     if not a.no_browser:
         clean_child_env()
         threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     try:
-        srv.serve_forever()
+        while server_thread.is_alive():
+            server_thread.join(0.5)
     except KeyboardInterrupt:
-        pass
+        srv.shutdown()
 
 
 if __name__ == '__main__':

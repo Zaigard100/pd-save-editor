@@ -251,7 +251,8 @@ async function boot() {
     if (d) { await api('setdir', { dir: d }); loadSaves(); }
   };
   $('#saveSelect').onchange = e => { if (!ST || !ST.dirty || confirm(t('confirm_revert'))) quiet(api('open', { path: e.target.value })); };
-  window.addEventListener('beforeunload', e => { if (ST && ST.dirty) { e.preventDefault(); e.returnValue = ''; } });
+  // in the app window the native close dialog handles this
+  window.addEventListener('beforeunload', e => { if (!window.pywebview && ST && ST.dirty) { e.preventDefault(); e.returnValue = ''; } });
   document.addEventListener('keydown', onKey);
   document.addEventListener('mousemove', e => { mouse = { x: e.clientX, y: e.clientY }; if (placing) updateGhost(); });
   setupResearchCanvas();
