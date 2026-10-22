@@ -30,7 +30,7 @@ jobs:
           - os: windows-latest
             asset: PDSaveEditor-windows-x64.exe
           - os: ubuntu-22.04          # older glibc -> runs on most distros
-            asset: PDSaveEditor-linux-x64.tar.gz
+            asset: PDSaveEditor-x86_64.AppImage
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -46,23 +46,33 @@ jobs:
           printf '"""Version of the editor; CI overwrites this file from the git tag."""\n__version__ = "%s"\n' "$V" > version.py
           cat version.py
 
-      - run: pyinstaller --noconfirm PDSaveEditor.spec
+      - name: Build (Windows, one file)
+        if: runner.os == 'Windows'
+        run: pyinstaller --noconfirm PDSaveEditor.spec
+
+      - name: Build (Linux, folder for the AppImage)
+        if: runner.os == 'Linux'
+        run: PDSAVE_ONEDIR=1 pyinstaller --noconfirm PDSaveEditor.spec
+
+      - name: AppImage
+        if: runner.os == 'Linux'
+        run: |
+          curl -sSL -o appimagetool https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+          APPIMAGETOOL=$PWD/appimagetool packaging/linux/build_appimage.sh
 
       - name: Smoke test
         shell: bash
         run: |
-          if [[ "$RUNNER_OS" == "Windows" ]]; then dist/PDSaveEditor.exe --version; else dist/PDSaveEditor --version; fi
+          if [[ "$RUNNER_OS" == "Windows" ]]; then dist/PDSaveEditor.exe --version
+          else APPIMAGE_EXTRACT_AND_RUN=1 dist/PDSaveEditor-x86_64.AppImage --version; fi
 
       - name: Package
         shell: bash
         run: |
           mkdir -p out
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            cp dist/PDSaveEditor.exe "out/${{ matrix.asset }}"
-          else
-            chmod +x dist/PDSaveEditor
-            tar -C dist -czf "out/${{ matrix.asset }}" PDSaveEditor
-          fi
+          if [[ "$RUNNER_OS" == "Windows" ]]; then cp dist/PDSaveEditor.exe "out/${{ matrix.asset }}"
+          else cp dist/PDSaveEditor-x86_64.AppImage "out/${{ matrix.asset }}"; fi
 
       - uses: actions/upload-artifact@v4
         with:

@@ -361,6 +361,17 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(500, {'error': '%s: %s' % (type(e).__name__, e)})
 
 
+def clean_child_env():
+    """PyInstaller points LD_LIBRARY_PATH at its bundled libs; restore the user's value so the
+    browser started by webbrowser.open (xdg-open) uses the system libraries."""
+    if getattr(sys, 'frozen', False) and sys.platform.startswith('linux'):
+        orig = os.environ.get('LD_LIBRARY_PATH_ORIG')
+        if orig:
+            os.environ['LD_LIBRARY_PATH'] = orig
+        else:
+            os.environ.pop('LD_LIBRARY_PATH', None)
+
+
 def make_server(port):
     for p in [port] + list(range(port + 1, port + 20)):
         try:
@@ -393,6 +404,7 @@ def main():
     print('Game data: %s' % app.gamedata)
     print('Close this window (or press "Exit" in the editor) to stop.')
     if not a.no_browser:
+        clean_child_env()
         threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     try:
         srv.serve_forever()

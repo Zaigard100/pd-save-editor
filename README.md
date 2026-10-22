@@ -11,7 +11,8 @@
 Готовые сборки — на странице **Releases**:
 
 * Windows: `PDSaveEditor-windows-x64.exe` — просто запустить.
-* Linux: `PDSaveEditor-linux-x64.tar.gz` — распаковать и запустить `./PDSaveEditor`.
+* Linux: `PDSaveEditor-x86_64.AppImage` — сделать исполняемым (`chmod +x`) и запустить двойным
+  кликом или из терминала. Без терминала редактор закрывается кнопкой «Выход».
 
 Откроется окно-консоль и вкладка браузера с редактором (http://127.0.0.1:8765/).
 Закрыть — кнопка «Выход» в редакторе или закрыть консоль.
@@ -39,11 +40,12 @@ pip install pillow
 python3 pdedit_web.py [папка_SaveGames или odsaveN.sav]      # первый запуск предложит извлечь данные
 python3 extract/build_gamedata.py "/путь/к/Pacific Drive"   # или извлечь вручную в ./gamedata
 python3 -m unittest discover -s tests                        # тесты кодека
-pip install pyinstaller && pyinstaller --noconfirm PDSaveEditor.spec   # бинарник в dist/
+pip install pyinstaller && pyinstaller --noconfirm PDSaveEditor.spec   # один файл в dist/
+PDSAVE_ONEDIR=1 pyinstaller --noconfirm PDSaveEditor.spec && packaging/linux/build_appimage.sh   # AppImage
 ```
 
 Сборка релизов: GitHub Actions (`.github/workflows/build.yml`) на каждый тег `v*` гоняет тесты,
-собирает Windows- и Linux-версии PyInstaller'ом и публикует их в Releases.
+собирает Windows-версию (`.exe`) и Linux-версию (AppImage) PyInstaller'ом и публикует их в Releases.
 
 ## Командная строка и старый GUI
 

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=PD Save Editor
+Name[ru]=Редактор сохранений Pacific Drive
+Comment=Pacific Drive save editor
+Comment[ru]=Редактор сохранений Pacific Drive
+Exec=PDSaveEditor
+Icon=pdsave-editor
+Categories=Utility;Game;
+Terminal=false
