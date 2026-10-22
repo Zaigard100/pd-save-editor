@@ -1,0 +1,84 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pillow==11.0.0
+      - run: python -m unittest discover -s tests -v
+
+  build:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            asset: PDSaveEditor-windows-x64.exe
+          - os: ubuntu-22.04          # older glibc -> runs on most distros
+            asset: PDSaveEditor-linux-x64.tar.gz
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pyinstaller==6.11.1 pillow==11.0.0
+
+      - name: Stamp version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then V="$GITHUB_REF_NAME"; else V="dev-${GITHUB_SHA::7}"; fi
+          printf '"""Version of the editor; CI overwrites this file from the git tag."""\n__version__ = "%s"\n' "$V" > version.py
+          cat version.py
+
+      - run: pyinstaller --noconfirm PDSaveEditor.spec
+
+      - name: Smoke test
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then dist/PDSaveEditor.exe --version; else dist/PDSaveEditor --version; fi
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p out
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            cp dist/PDSaveEditor.exe "out/${{ matrix.asset }}"
+          else
+            chmod +x dist/PDSaveEditor
+            tar -C dist -czf "out/${{ matrix.asset }}" PDSaveEditor
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: out/${{ matrix.asset }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: out/*
+          generate_release_notes: true

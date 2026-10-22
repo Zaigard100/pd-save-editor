@@ -1,0 +1,12 @@
+# extracted game assets (never committed or shipped)
+gamedata/
+# saves and backups
+*.sav
+*.sav.bak-*
+*.sav.tmp
+# python / build output
+__pycache__/
+*.pyc
+build/
+dist/
+.venv/

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pacific Drive — редактор сохранений</title>
+<link rel="stylesheet" href="/web/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="brand-main">PACIFIC DRIVE</span><span class="brand-sub" data-t="editor">// РЕДАКТОР СОХРАНЕНИЙ</span></div>
+  <div class="topbar-controls">
+    <select id="saveSelect" title="Save"></select>
+    <button id="btnDir" class="ghost" data-t="folder">Папка…</button>
+    <select id="langSelect" title="Language"></select>
+    <button id="btnReload" class="ghost" data-t="revert">Отменить изменения</button>
+    <button id="btnSave" class="primary" data-t="save">Сохранить</button>
+    <button id="btnQuit" class="ghost" data-t="quit" title="Exit">Выход</button>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="inventory" class="active" data-t="tab_inventory">Инвентарь</button>
+  <button data-tab="car" data-t="tab_car">Автомобиль</button>
+  <button data-tab="research" data-t="tab_research">Исследования</button>
+  <button data-tab="codex" data-t="tab_codex">Журнал</button>
+  <button data-tab="economy" data-t="tab_economy">Энергия и ресурсы</button>
+  <button data-tab="stats" data-t="tab_stats">Статистика</button>
+  <button data-tab="settings" data-t="tab_settings">Настройки игры</button>
+  <button data-tab="summary" data-t="tab_summary">Сводка</button>
+</nav>
+
+<main>
+  <section id="tab-inventory" class="tab active">
+    <div class="inv-layout">
+      <aside class="panel containers-panel">
+        <h3 data-t="containers">Контейнеры</h3>
+        <div id="containerList"></div>
+      </aside>
+      <div class="panel grid-panel">
+        <div class="grid-head">
+          <h2 id="gridTitle"></h2>
+          <div class="hint" id="gridHint"></div>
+        </div>
+        <div id="contView"></div>
+        <div id="slotDetails" class="slot-details hidden"></div>
+      </div>
+      <aside class="panel catalog-panel" id="catalogPanel"></aside>
+    </div>
+  </section>
+
+  <section id="tab-car" class="tab">
+    <div class="car-layout">
+      <div class="panel">
+        <div class="grid-head row" style="justify-content:space-between">
+          <div><h2 data-t="tab_car">Автомобиль</h2><div class="hint" data-t="car_hint"></div></div>
+          <button class="primary" id="btnRepairCar" data-t="repair_all">Починить всё</button>
+        </div>
+        <div id="quirksBox" class="quirks-box"></div>
+        <div id="carSlots"></div>
+      </div>
+      <aside class="panel car-editor" id="carEditor"></aside>
+    </div>
+  </section>
+
+  <section id="tab-research" class="tab">
+    <div class="research-layout">
+      <div class="panel research-panel">
+        <div class="grid-head row" style="justify-content:space-between">
+          <div><h2 data-t="tab_research">Исследования</h2><div class="hint" data-t="research_hint"></div></div>
+          <div class="row legend" id="researchLegend"></div>
+        </div>
+        <div id="researchCanvas" class="research-canvas"><div id="researchInner" class="research-inner"></div></div>
+      </div>
+      <aside class="panel node-panel" id="nodePanel"></aside>
+    </div>
+  </section>
+
+  <section id="tab-codex" class="tab">
+    <div class="codex-layout">
+      <aside class="panel" id="codexCats"></aside>
+      <div class="panel">
+        <div class="grid-head row" style="justify-content:space-between">
+          <h2 id="codexTitle"></h2>
+          <div class="row" id="codexTools"></div>
+        </div>
+        <div id="codexGrid" class="codex-grid"></div>
+      </div>
+      <aside class="panel node-panel" id="codexEntry"></aside>
+    </div>
+  </section>
+
+  <section id="tab-economy" class="tab">
+    <div class="panel"><h2 data-t="currencies">Энергия якорей и опыт</h2><div id="currencyList" class="cards"></div></div>
+    <div class="panel"><h2 data-t="resources">Состояние машины и игрока</h2><div id="resourceList" class="cards"></div></div>
+  </section>
+
+  <section id="tab-stats" class="tab">
+    <div class="panel"><h2 data-t="tab_stats">Статистика</h2><div class="hint" data-t="stats_hint"></div><div id="statsMain"></div></div>
+    <div class="panel"><details id="wbDetails"><summary><h3 style="display:inline" data-t="wb_all">Все значения прогресса</h3></summary><div id="wbAll"></div></details></div>
+  </section>
+
+  <section id="tab-settings" class="tab">
+    <div class="panel"><h2 id="presetTitle"></h2><div id="presetList" class="presets"></div></div>
+    <div class="panel"><div id="settingsList"></div></div>
+  </section>
+
+  <section id="tab-summary" class="tab">
+    <div class="panel"><h2 data-t="tab_summary">Сводка</h2><div id="summary"></div></div>
+  </section>
+</main>
+
+<div id="setup" class="setup hidden"></div>
+<div id="ghost" class="ghost-item hidden"></div>
+<div id="tooltip" class="tooltip hidden"></div>
+<div id="toast" class="toast hidden"></div>
+<div id="busy" class="busy hidden"><div class="spinner"></div></div>
+<script src="/web/app.js"></script>
+</body>
+</html>
