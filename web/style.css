@@ -371,3 +371,31 @@ button[disabled] { opacity: .4; cursor: default; }
 .setup-list { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 12px; font-family: Bedstead, monospace; font-size: 12px; }
 .setup-log { max-height: 220px; overflow: auto; background: #0e110f; border: 1px solid var(--line); padding: 8px; font-size: 11px; color: var(--muted); white-space: pre-wrap; margin-top: 10px; }
 .setup-log:empty { display: none; }
+
+/* ---------- packs ---------- */
+.pack-badge { position: absolute; top: 4px; right: 6px; font-size: 12px; }
+.cat-item { position: relative; }
+.pack-chip { border-color: #6a5a8a; }
+.pack-chip.active { background: #6a5a8a; color: #fff; }
+.pack-row { margin: 4px 0; gap: 8px; }
+.rnode .rpack { position: absolute; top: 2px; left: 6px; font-size: 14px; }
+.rnode.pack-blocked { opacity: .25; filter: grayscale(1); }
+
+/* ---------- route map ---------- */
+.map-canvas { background: #0b0d0c; }
+.map-bg { position: absolute; left: 0; top: 0; width: 2048px; height: 2048px; pointer-events: none; user-select: none; }
+.road { fill: none; stroke: rgba(30, 30, 25, .35); stroke-width: 5; stroke-dasharray: 10 8; }
+.road.known { stroke: rgba(40, 32, 20, .85); stroke-width: 6; stroke-dasharray: none; }
+.leg { position: absolute; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%;
+  background: rgba(30, 28, 22, .85); border: 3px solid #6b5f45; }
+.leg img, .leg .tinted { width: 70%; height: 70%; pointer-events: none; }
+.leg.hidden { opacity: .4; border-style: dashed; }
+.leg.visited { border-color: #9cbf7a; }
+.leg.current { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(240,160,50,.35), 0 0 24px var(--accent); }
+.leg.selected { box-shadow: 0 0 0 4px #fff, 0 0 26px #fff; }
+.leg-id { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-family: Bedstead, monospace; font-size: 15px;
+  color: #2a2418; background: rgba(232, 220, 190, .85); padding: 0 4px; white-space: nowrap; pointer-events: none; }
+.leg-car { position: absolute; top: -22px; right: -14px; font-size: 22px; pointer-events: none; }
+.leg-anchors { position: absolute; top: -16px; left: -12px; font-size: 13px; background: #20262a; color: #cfe; padding: 0 3px; pointer-events: none; }
+.field-row.unset .fl { opacity: .55; }
+.node-panel select { width: 100%; max-width: 100%; }

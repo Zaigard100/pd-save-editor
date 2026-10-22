@@ -134,7 +134,17 @@ class App:
         self.server = None
         self.window = None
         self.page_loaded = False     # set when the UI asked for /api/gamedata (proves the window works)
+        self.settings_path = os.path.join(data_dir, 'settings.json')
+        try:
+            with open(self.settings_path, encoding='utf-8') as f:
+                self.settings = json.load(f)
+        except (OSError, ValueError):
+            self.settings = {}
         self.load_gamedata()
+
+    def apply_settings(self, model):
+        owned = self.settings.get('ownedPacks')
+        model.owned_packs = set(owned) if owned is not None else None
 
     def gamedata_ready(self):
         try:
@@ -212,7 +222,17 @@ class App:
         m = self.model
         if op == 'open':
             self.model = pdmodel.Model(a['path'], self.gd)
+            self.apply_settings(self.model)
             return self.model.state()
+        if op == 'packs_set':
+            self.settings['ownedPacks'] = list(a['owned'])
+            os.makedirs(os.path.dirname(self.settings_path), exist_ok=True)
+            with open(self.settings_path, 'w', encoding='utf-8') as f:
+                json.dump(self.settings, f, ensure_ascii=False, indent=1)
+            if m is not None:
+                self.apply_settings(m)
+                return m.state()
+            return {'ok': True}
         if op == 'setdir':
             self.dir = a['dir']
             return self.saves()
@@ -277,6 +297,22 @@ class App:
             m.quirk_grave_remove(a['condition'], a['behavior'])
         elif op == 'quirk_flag':
             m.quirk_flag(a['name'], bool(a['on']))
+        elif op == 'map_flag':
+            m.map_leg_flag(a['leg'], a['flag'], bool(a['on']))
+        elif op == 'map_anchors':
+            m.map_leg_anchors(a['leg'], int(a['value']))
+        elif op == 'map_wb':
+            m.map_leg_wb(a['leg'], a['tag'], a.get('value'))
+        elif op == 'map_mod':
+            m.map_leg_modifier(a['leg'], a['rm'], bool(a['on']))
+        elif op == 'map_pool':
+            m.map_leg_pool(a['leg'], a['kind'], a['cls'], bool(a['on']))
+        elif op == 'map_current':
+            m.map_set_current(a['leg'])
+        elif op == 'map_reveal_all':
+            m.map_reveal_all()
+        elif op == 'map_instability':
+            m.map_instability(float(a['value']))
         elif op == 'install':
             m.set_installed(a['node'], bool(a['on']))
         elif op == 'save':
@@ -284,8 +320,24 @@ class App:
             st = m.state()
             st['backup'] = bak
             return st
+        elif op == 'packs_clean':
+            owned = self.settings.get('ownedPacks')
+            if owned is None:
+                raise pdmodel.EditError('mark the packs you own first')
+            st = m.state()
+            st['cleaned'] = m.clean_packs(owned)
+            st.update(m.state())
+            return st
+        elif op == 'packs_preview':
+            return {'report': m.pack_report(a.get('owned', self.settings.get('ownedPacks') or []))}
+        elif op == 'add_all':
+            n = m.add_all(a['cont'])
+            st = m.state()
+            st['added'] = n
+            return st
         elif op == 'reload':
             self.model = pdmodel.Model(m.path, self.gd)
+            self.apply_settings(self.model)
             return self.model.state()
         else:
             raise pdmodel.EditError('unknown operation %s' % op)

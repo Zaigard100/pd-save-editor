@@ -20,7 +20,7 @@ import utexture
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, '..', 'gamedata')
 log = print
-DATA_VERSION = 2  # bump when the layout of gamedata/ changes
+DATA_VERSION = 4  # bump when the layout of gamedata/ changes
 LANGS = ['en-US', 'ru', 'uk', 'de', 'fr', 'es', 'it', 'pl', 'pt-BR', 'tr', 'ja', 'ko', 'zh-CN', 'zh-TW']
 LANG_KEY = {'en-US': 'en'}
 
@@ -129,6 +129,14 @@ def build(game, out_dir, logger=print):
     ini = paks.read('PenDriverPro/Config/DefaultGame.ini').decode('utf-8', 'replace')
     grid = {}
     stacks = {}
+    # paid packs / expansions, in EEntitlementId order (ENTITLEMENT_0, _1, ...)
+    packs = []
+    for line in ini.splitlines():
+        if line.startswith('+Entitlements=('):
+            g = lambda k: (re.search(k + r'="?([^",)]*)', line) or [None, ''])[1]
+            disp = re.search(r'DisplayName=INVTEXT\("([^"]*)"\)', line)
+            packs.append({'id': g('Name'), 'name': disp.group(1) if disp else g('Name'), 'steam': g('SteamAppID'),
+                          'mount': g('MountableContentName'), 'index': len(packs)})
     for line in ini.splitlines():
         if line.startswith('ItemGridSizes=(('):
             grid = {k: [int(x), int(y)] for k, x, y in re.findall(r'\((\w+), \(X=(\d+),Y=(\d+)\)\)', line)}
@@ -242,6 +250,8 @@ def build(game, out_dir, logger=print):
             'tags': [t for t in props.get('ActorTags', []) if isinstance(t, str)],
             'logCategory': props.get('LogCategory') if isinstance(props.get('LogCategory'), str) else None,
             'unlockTag': props.get('UnlockTag') if isinstance(props.get('UnlockTag'), str) else None,
+            'dlc': [packs[int(x.rsplit('_', 1)[1])]['id'] for x in (props.get('RequiredDLC') or [])
+                    if isinstance(x, str) and x.rsplit('_', 1)[1].isdigit() and int(x.rsplit('_', 1)[1]) < len(packs)],
         }
         items[game_path].update(dsum)
     log('  with icon:', sum(1 for i in items.values() if i['icon']), ' with ru name:',
@@ -627,6 +637,65 @@ def build(game, out_dir, logger=print):
             add_entry(gp, '/Script/PenDriverPro.DialogueSequenceSet', props, title=title, extra={'lines': lines})
     log('logbook entries:', len(logbook['entries']), 'categories:', len(logbook['categories']))
 
+    # ---------------------------------------------------------- world map (route planning table)
+    worldmap = {'legs': {}, 'edges': [], 'background': None}
+    wpkg = uasset.load(paks, 'PenDriverPro/Content/Systems/Routes/V2/WorldShape')
+    wexp = {i: e for i, e in enumerate(wpkg.exports, 1)}
+    wprops = {i: wpkg.export_props(e)[0] for i, e in wexp.items()}
+    for i, e in wexp.items():
+        cls = wpkg.class_name(e)
+        pr = wprops[i]
+        if cls == 'RouteShape':
+            bg = (pr.get('Background') or {}).get('ref')
+            if bg:
+                try:
+                    img = utexture.load_texture(uasset.load(paks, uasset.game_to_pak(bg)), max_size=2048)
+                    img.save(os.path.join(OUT, 'icons', 'worldmap.png'), optimize=True)
+                    worldmap['background'] = 'icons/worldmap.png'
+                except Exception as ex:  # noqa: BLE001
+                    log('  map background failed', ex)
+        elif cls == 'RouteShapeLeg':
+            ref, tint = icon_info(pr.get('Icon'))
+            leg = {'x': pr.get('Position', [0, 0])[0], 'y': pr.get('Position', [0, 0])[1], 'size': pr.get('Size', 64.0),
+                   'icon': save_icon(paks, ref, 'MAP_' + ref.rsplit('.', 1)[-1], icons) if ref else None,
+                   'junction': loc.text(pr.get('JunctionID')), 'name': loc.text(pr.get('NameOverride')),
+                   'type': loc.text(pr.get('DisplayTypeOverride')), 'zone': loc.text(pr.get('ZoneArea')),
+                   'tags': [t for t in pr.get('Tags', []) if isinstance(t, str)],
+                   'start': bool(pr.get('bIsStartingLevel')), 'byDefault': bool(pr.get('bDiscoveredByDefault'))}
+            worldmap['legs'][e['name']] = leg
+            for c in pr.get('Connections', []):
+                ed = wprops.get(c.get('idx'), {})
+                tgt = (ed.get('Target') or {}).get('idx', 0)
+                if tgt > 0:
+                    worldmap['edges'].append({'from': e['name'], 'to': wexp[tgt]['name'],
+                                              'points': [{'p': pt.get('Position'), 'in': pt.get('InTangent'), 'out': pt.get('OutTangent')}
+                                                         for pt in ed.get('Points', [])]})
+    log('world map: %d legs, %d edges' % (len(worldmap['legs']), len(worldmap['edges'])))
+
+    # route modifiers (RM_*) and what hazards/boons/events are called (via their logbook entries)
+    modifiers = {}
+    spawnables = {}
+    for p in sorted(paks.list('PenDriverPro/Content/', '.uasset')):
+        n = p.rsplit('/', 1)[1][:-7]
+        gp = '/' + p[:-7].replace('PenDriverPro/Content/', 'Game/') + '.' + n
+        if n.startswith('RM_'):
+            try:
+                pkg = uasset.load(paks, p[:-7])
+                pr = pkg.export_props(pkg.main_export())[0]
+            except Exception:  # noqa: BLE001
+                continue
+            ref, tint = icon_info(pr.get('Icon'))
+            modifiers[gp] = {'id': n, 'name': loc.text(pr.get('Name')), 'desc': loc.text(pr.get('Description')),
+                             'short': loc.text(pr.get('ShortDescription')),
+                             'icon': save_icon(paks, ref, 'RM_' + n, icons) if ref and 'PLACEHOLDER' not in ref else None,
+                             'tint': tint, 'state': '/JunctionState/' in p}
+        elif n.startswith(('BP_Hazard_', 'BP_Boon_', 'GEV_', 'BP_Spawn_', 'PFX_Boon_')):
+            d = bp_defaults(p[:-7])
+            lb = (d.get('LogBookData') or {}).get('ref') if isinstance(d.get('LogBookData'), dict) else None
+            if lb:
+                spawnables[gp + '_C'] = lb
+    log('route modifiers: %d, hazards/boons/events: %d' % (len(modifiers), len(spawnables)))
+
     # ---------------------------------------------------------- strings
     st = loc.st
     strings = {
@@ -708,7 +777,8 @@ def build(game, out_dir, logger=print):
                 car_slots[tag + '_Rack'] = {l: '%s · %s' % (base.get(l, ''), rack_names[kind].get(l, '')) for l in base}
 
     for name, obj in (('items', items), ('currencies', currencies), ('containers', containers),
-                      ('effects', effects), ('palettes', palettes), ('carslots', car_slots), ('graph', graph), ('logbook', logbook), ('quirks', quirks),
+                      ('effects', effects), ('palettes', palettes), ('carslots', car_slots), ('graph', graph), ('logbook', logbook), ('quirks', quirks), ('packs', packs),
+                      ('worldmap', worldmap), ('modifiers', modifiers), ('spawnables', spawnables),
                       ('presets', presets), ('settings', settings), ('strings', strings)):
         with open(os.path.join(OUT, name + '.json'), 'w', encoding='utf-8') as fh:
             json.dump(obj, fh, ensure_ascii=False, indent=0, separators=(',', ':'))

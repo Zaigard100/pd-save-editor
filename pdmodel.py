@@ -33,7 +33,8 @@ class EditError(Exception):
 def load_gamedata():
     gd = {}
     for name in ('items', 'containers', 'currencies', 'presets', 'settings', 'strings', 'langs',
-                 'effects', 'palettes', 'carslots', 'graph', 'logbook', 'quirks'):
+                 'effects', 'palettes', 'carslots', 'graph', 'logbook', 'quirks', 'packs', 'worldmap',
+                 'modifiers', 'spawnables'):
         p = os.path.join(GAMEDATA, name + '.json')
         if os.path.exists(p):
             with open(p, encoding='utf-8') as f:
@@ -58,6 +59,7 @@ class Model:
         self.save = pdtools.Save(path)
         self.path = path
         self.dirty = False
+        self.owned_packs = None      # None = every pack allowed; else a set of pack ids
         self._index()
 
     # ------------------------------------------------------------ indexes
@@ -133,6 +135,7 @@ class Model:
     # ------------------------------------------------------------ items
     def new_item(self, arche, table, template=None):
         """Create an ItemInstance. Copies a same-archetype template's data if given."""
+        self.check_pack(arche)
         g = self.new_guid()
         data = {'Archetype|$': '*%s|%s' % (arche, ARCH_CLASS)}
         if template is not None:
@@ -536,6 +539,7 @@ class Model:
             for k in list(d):
                 if k not in ('Archetype|$', 'CreateContext|N'):
                     d.pop(k)
+            self.check_pack(arche)
             d['Archetype|$'] = '*%s|%s' % (arche, ARCH_CLASS)
         self.dirty = True
 
@@ -636,6 +640,8 @@ class Model:
             elif L and L['class'] == 'ItemListLayout':
                 c['kind'] = 'list'
                 c['totals'] = {a: sum(len(self.slot_items(x)) for x in ss) for a, ss in self.list_totals(g).items()}
+                if lid in self.UNIQUE_LISTS:
+                    c['addAll'] = len(self.add_all_candidates(g))
                 c['slotsCount'] = len(d.get('Slots|A$', []))
             else:
                 continue
@@ -721,6 +727,9 @@ class Model:
         """state: 'locked' | 'available' | 'researched'"""
         if node_id not in self.gd['graph']['nodes']:
             raise EditError('unknown node %s' % node_id)
+        product = self.gd['graph']['nodes'][node_id].get('product')
+        if state != 'locked' and product:
+            self.check_pack(product)
         u = self.unlock_state()
         ref = self.node_ref(node_id)
         un = u.setdefault('UnlockedNodes|A$', [])
@@ -868,6 +877,8 @@ class Model:
         info = self.gd.get('logbook', {}).get('entries', {}).get(path)
         if not info:
             raise EditError('unknown logbook entry %s' % path)
+        if on:
+            self.check_pack(path)
         lg = self.logbook_guid()
         if not lg:
             raise EditError('this save has no logbook yet')
@@ -1031,6 +1042,285 @@ class Model:
         self.se_manager()[name + '|B'] = bool(on)
         self.dirty = True
 
+    # ------------------------------------------------------------ paid packs / expansions
+    FIG_PREFIX = '/PDFeature_Fig/'
+
+    def item_packs(self, path):
+        """Packs an asset needs: RequiredDLC of the item, or the expansion for its plugin content."""
+        if not path:
+            return []
+        if path.startswith(self.FIG_PREFIX):
+            return ['DlcFig']
+        return self.item_info(path).get('dlc') or []
+
+    def pack_blocked(self, path):
+        return self.owned_packs is not None and any(p not in self.owned_packs for p in self.item_packs(path))
+
+    def check_pack(self, arche):
+        if self.pack_blocked(arche):
+            names = {p['id']: p['name'] for p in self.gd.get('packs', [])}
+            raise EditError('needs "%s", which is not marked as owned (Summary -> Packs)'
+                            % ', '.join(names.get(p, p) for p in self.item_packs(arche)))
+
+    def _pack_targets(self, owned):
+        """Everything in the save that belongs to packs outside `owned`."""
+        blocked = lambda path: any(p not in owned for p in self.item_packs(path))
+        items = [g for g, (_, o) in self.obj.items() if isinstance(o, dict)
+                 and o.get('_class|^') == INV + 'ItemInstance' and blocked(asset_of(o['_data|*'].get('Archetype|$')))]
+        logs = [p for p in self.logbook_entries() if blocked(p)]
+        nodes = []
+        for n, v in self.gd.get('graph', {}).get('nodes', {}).items():
+            if v.get('product') and blocked(v['product']):
+                nodes.append(n)
+        u = self.unlock_state()
+        fig_nodes = [r for r in u.get('UnlockedNodes|A$', []) + u.get('PurchasedNodes|A$', []) if self.FIG_PREFIX in r]
+        recipes_blocked = {v['recipe'] for v in self.gd.get('graph', {}).get('nodes', {}).values()
+                           if v.get('recipe') and v.get('product') and blocked(v['product'])}
+        inv = pdtools.inventory_manager(self.save)
+        recipes = [r for r in inv.get('CraftedRecipes|A$', []) if asset_of(r) in recipes_blocked or self.FIG_PREFIX in r]
+        return items, logs, nodes, fig_nodes, recipes
+
+    def pack_report(self, owned=None):
+        owned = set(owned if owned is not None else (self.owned_packs or []))
+        per = {}
+        for g, (_, o) in self.obj.items():
+            if isinstance(o, dict) and o.get('_class|^') == INV + 'ItemInstance':
+                for p in self.item_packs(asset_of(o['_data|*'].get('Archetype|$'))):
+                    per[p] = per.get(p, 0) + 1
+        for p in self.logbook_entries():
+            for pk in self.item_packs(p):
+                per[pk] = per.get(pk, 0) + 1
+        items, logs, nodes, fig_nodes, recipes = self._pack_targets(owned)
+        return {'present': per, 'remove': {'items': len(items), 'logbook': len(logs),
+                                           'research': len(nodes) + len(fig_nodes), 'recipes': len(recipes)}}
+
+    def _scrub_refs(self, guids):
+        """Remove every reference to these objects (array elements, map pairs; scalars become null)."""
+        needles = tuple('@%s|' % g for g in guids)
+        hit = lambda v: isinstance(v, str) and v.startswith(needles)
+
+        def rec(v):
+            if isinstance(v, dict):
+                for k, x in list(v.items()):
+                    if hit(x):
+                        v[k] = None
+                    elif isinstance(x, (dict, list)):
+                        rec(x)
+            elif isinstance(v, list):
+                v[:] = [x for x in v if not hit(x) and not (isinstance(x, list) and len(x) == 2 and (hit(x[0]) or hit(x[1])))]
+                for x in v:
+                    if isinstance(x, (dict, list)):
+                        rec(x)
+        rec(self.save.root('GAME'))
+
+    def _drop_empty_slots(self):
+        for g, (_, o) in list(self.obj.items()):
+            if not isinstance(o, dict) or not o.get('_class|^', '').endswith('.ItemContainer'):
+                continue
+            slots = o.get('_data|*', {}).get('Slots|A$')
+            if not slots:
+                continue
+            keep = []
+            for r in slots:
+                sg = guid_of(r)
+                so = self.obj.get(sg, (0, None))[1]
+                if so and so.get('_class|^') in (INV + 'ItemTileSlot', INV + 'ItemListSlot') \
+                        and not so.get('_data|*', {}).get('Items|A$'):
+                    self.remove_object(sg)
+                    continue
+                keep.append(r)
+            slots[:] = keep
+
+    def clean_packs(self, owned):
+        """Remove content of packs the player does not own, so the game can load the save."""
+        owned = set(owned)
+        items, logs, nodes, fig_nodes, recipes = self._pack_targets(owned)
+        gone = set()
+        for g in items:
+            if g in self.obj:
+                stack = [g]
+                while stack:          # item plus everything it owns
+                    x = stack.pop()
+                    gone.add(x)
+                    stack += [c for c, (_, o) in self.obj.items() if guid_of(o.get('_outer|$')) == x and c not in gone]
+        for p in logs:
+            gone.add(self.logbook_entries()[p])
+        if gone:
+            self._scrub_refs(gone)
+            for g in list(gone):
+                if g in self.obj:
+                    t, _ = self.obj.pop(g)
+                    t.pop(g + '|>', None)
+            self._drop_empty_slots()
+        u = self.unlock_state()
+        node_refs = {self.node_ref(n) for n in nodes} | set(fig_nodes)
+        for key in ('UnlockedNodes|A$', 'PurchasedNodes|A$'):
+            u[key] = [r for r in u.get(key, []) if r not in node_refs and r.split(':')[-1].split('|')[0] not in nodes]
+        inv = pdtools.inventory_manager(self.save)
+        inv['CraftedRecipes|A$'] = [r for r in inv.get('CraftedRecipes|A$', []) if r not in recipes]
+        for g, o in pdtools.objects_of_class(self.save, 'BP_MainCharacterManager_C'):
+            d = o.get('_data|*', {})
+            if 'PlayerUpgradesUnlocked|A$' in d:
+                d['PlayerUpgradesUnlocked|A$'] = [r for r in d['PlayerUpgradesUnlocked|A$']
+                                                  if not any(p not in owned for p in self.item_packs(asset_of(r)))]
+        self._ext = None
+        self.dirty = True
+        return {'items': len(items), 'logbook': len(logs), 'research': len(nodes) + len(fig_nodes), 'recipes': len(recipes)}
+
+    # unique-item lists: one of each
+    UNIQUE_LISTS = {
+        'CL_Garage_Fax': lambda it: it['id'].startswith('IA_TextNote_'),
+        'CL_Garage_Cosmetics': lambda it: it['category'] == 'Cosmetics' and 'IP_UniqueItem' in it.get('props', []),
+        'CL_Garage_Cosmetics_Display': lambda it: it['category'] == 'Cosmetics' and 'IP_UniqueItem' in it.get('props', []),
+        'CL_Radio_Playlist': lambda it: it['id'].startswith('IA_MusicTrack_'),
+    }
+
+    def add_all_candidates(self, cont_guid):
+        _, L = self.container_layout(self.get(cont_guid))
+        rule = self.UNIQUE_LISTS.get((L or {}).get('id'))
+        if not rule:
+            return []
+        have = set(self.list_totals(cont_guid))
+        out = []
+        for a, it in self.gd['items'].items():
+            if a in have or not rule(it) or self.pack_blocked(a):
+                continue
+            if any(w in it['id'] for w in ('_Empty', 'Template', 'DEBUG', '_Test')) or not it.get('name'):
+                continue
+            out.append(a)
+        return out
+
+    def add_all(self, cont_guid):
+        added = self.add_all_candidates(cont_guid)
+        for a in added:
+            self.set_list_total(cont_guid, a, 1)
+        return len(added)
+
+    # ------------------------------------------------------------ route map (planning table)
+    LEG_FLAGS = {'Discovered': 'Discovered|B', 'Visited': 'Visited|B', 'Revealable': 'Revealable|B'}
+    LEG_POOLS = {'hazards': 'CurrentHazardPoolClasses|A~', 'boons': 'CurrentBoonPoolClasses|A~',
+                 'events': 'CurrentGameplayEventPool|A~'}
+
+    def route_state(self):
+        for g, (_, o) in self.obj.items():
+            if isinstance(o, dict) and o.get('_class|^', '').endswith('/BP_RouteState.BP_RouteState_C'):
+                return g, o.setdefault('_data|*', {})
+        return None, None
+
+    def _legs(self):
+        """shape leg name (RouteShapeLeg_N) -> leg state guid"""
+        _, rs = self.route_state()
+        out = {}
+        for shape, ref in (rs or {}).get('LegStates|M$$', []):
+            if guid_of(ref) in self.obj:
+                out[shape[1:].split('|')[0].rsplit(':', 1)[-1]] = guid_of(ref)
+        return out
+
+    def _wb_entries(self, ref):
+        g = guid_of(ref)
+        if g not in self.obj:
+            return None
+        return self.get(g).setdefault('_data|*', {}).setdefault('Entries|MTF', [])
+
+    def map_view(self):
+        rg, rs = self.route_state()
+        if rs is None:
+            return None
+        legs = {}
+        for name, g in self._legs().items():
+            d = self.get(g).get('_data|*', {})
+            legs[name] = {
+                'discovered': bool(d.get('Discovered|B')), 'visited': bool(d.get('Visited|B')),
+                'revealable': bool(d.get('Revealable|B')), 'anchors': d.get('AnchorRequirement|I', 0),
+                'modifiers': [asset_of(r) for r in d.get('AppliedModifiers|A$', [])],
+                'hazards': list(d.get(self.LEG_POOLS['hazards'], [])), 'boons': list(d.get(self.LEG_POOLS['boons'], [])),
+                'events': list(d.get(self.LEG_POOLS['events'], [])),
+                'route': pdtools.short_asset(d.get('DestinationRoute|$')) if d.get('DestinationRoute|$') else None,
+                'wb': dict((k, v) for k, v in (self._wb_entries(d.get('LegWhiteboard|$')) or [])),
+            }
+        cur = guid_of(rs.get('CurrentLeg|$'))
+        current = next((n for n, g in self._legs().items() if g == cur), None)
+        last = (rs.get('LastVisitedLeg|$') or '')[1:].split('|')[0].rsplit(':', 1)[-1] or None
+        rwb = dict((k, v) for k, v in (self._wb_entries(rs.get('RouteWhiteboard|$')) or []))
+        return {'legs': legs, 'current': current, 'lastVisited': last, 'phase': rs.get('CurrentPhase|N'),
+                'maxReveal': rs.get('Max Reveal Depth|I'), 'instability': rwb.get('WB.WorldState.Instability.Current', 0.0)}
+
+    def _leg(self, name):
+        g = self._legs().get(name)
+        if not g:
+            raise EditError('unknown map junction %s' % name)
+        return self.get(g).setdefault('_data|*', {})
+
+    def map_leg_flag(self, name, flag, on):
+        self._leg(name)[self.LEG_FLAGS[flag]] = bool(on)
+        self.dirty = True
+
+    def map_leg_anchors(self, name, n):
+        self._leg(name)['AnchorRequirement|I'] = max(0, int(n))
+        self.dirty = True
+
+    def map_leg_wb(self, name, tag, value):
+        wb = self._wb_entries(self._leg(name).get('LegWhiteboard|$'))
+        if wb is None:
+            raise EditError('this junction has no whiteboard')
+        for pair in wb:
+            if pair[0] == tag:
+                if value is None:
+                    wb.remove(pair)
+                else:
+                    pair[1] = float(value)
+                break
+        else:
+            if value is not None:
+                wb.append([tag, float(value)])
+        self.dirty = True
+
+    def map_leg_modifier(self, name, rm, on):
+        if rm not in self.gd.get('modifiers', {}):
+            raise EditError('unknown route modifier')
+        d = self._leg(name)
+        mods = d.setdefault('AppliedModifiers|A$', [])
+        ref = '*%s|/Script/PenDriverPro.RouteModifierAsset' % rm
+        mods[:] = [r for r in mods if asset_of(r) != rm]
+        if on:
+            mods.append(ref)
+        self.dirty = True
+
+    def map_leg_pool(self, name, kind, cls, on):
+        if cls not in self.gd.get('spawnables', {}):
+            raise EditError('unknown hazard/boon/event')
+        lst = self._leg(name).setdefault(self.LEG_POOLS[kind], [])
+        lst[:] = [c for c in lst if c != cls]
+        if on:
+            lst.append(cls)
+        self.dirty = True
+
+    def map_set_current(self, name):
+        _, rs = self.route_state()
+        g = self._legs().get(name)
+        if not g:
+            raise EditError('unknown map junction %s' % name)
+        rs['CurrentLeg|$'] = '@%s|%s' % (g, self.get(g)['_class|^'])
+        self.dirty = True
+
+    def map_reveal_all(self):
+        for name in self._legs():
+            self._leg(name)['Discovered|B'] = True
+        self.dirty = True
+
+    def map_instability(self, value):
+        _, rs = self.route_state()
+        wb = self._wb_entries(rs.get('RouteWhiteboard|$'))
+        if wb is None:
+            raise EditError('route whiteboard not found')
+        for pair in wb:
+            if pair[0] == 'WB.WorldState.Instability.Current':
+                pair[1] = float(value)
+                break
+        else:
+            wb.append(['WB.WorldState.Instability.Current', float(value)])
+        self.dirty = True
+
     # ------------------------------------------------------------ simple values
     def set_currency(self, arche, value):
         for pair in pdtools.currencies(self.save):
@@ -1124,7 +1414,9 @@ class Model:
                 'containers': conts, 'settings': settings, 'car': self.car_state(),
                 'allContainers': self.containers_view(), 'research': self.research_view(),
                 'logbook': self.logbook_view(), 'whiteboard': dict((k, v) for k, v in (self.whiteboard() or [])),
-                'quirks': self.quirks_view()}
+                'quirks': self.quirks_view(), 'packReport': self.pack_report(self.owned_packs or []),
+                'ownedPacks': sorted(self.owned_packs) if self.owned_packs is not None else None,
+                'map': self.map_view()}
 
     def write(self):
         bak = self.save.save()

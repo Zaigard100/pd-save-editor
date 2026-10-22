@@ -10,3 +10,7 @@ __pycache__/
 build/
 dist/
 .venv/
+# user settings when running from source
+settings.json
+pdsave-editor.log*
+webview/

@@ -23,6 +23,7 @@
 <nav class="tabs" id="tabs">
   <button data-tab="inventory" class="active" data-t="tab_inventory">Инвентарь</button>
   <button data-tab="car" data-t="tab_car">Автомобиль</button>
+  <button data-tab="map" data-t="tab_map">Карта</button>
   <button data-tab="research" data-t="tab_research">Исследования</button>
   <button data-tab="codex" data-t="tab_codex">Журнал</button>
   <button data-tab="economy" data-t="tab_economy">Энергия и ресурсы</button>
@@ -61,6 +62,19 @@
         <div id="carSlots"></div>
       </div>
       <aside class="panel car-editor" id="carEditor"></aside>
+    </div>
+  </section>
+
+  <section id="tab-map" class="tab">
+    <div class="research-layout">
+      <div class="panel research-panel">
+        <div class="grid-head row" style="justify-content:space-between">
+          <div><h2 data-t="tab_map">Карта</h2><div class="hint" data-t="map_hint"></div></div>
+          <div class="row" id="mapTools"></div>
+        </div>
+        <div id="mapCanvas" class="research-canvas map-canvas"><div id="mapInner" class="research-inner"></div></div>
+      </div>
+      <aside class="panel node-panel" id="legPanel"></aside>
     </div>
   </section>
 

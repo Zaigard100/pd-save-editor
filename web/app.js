@@ -72,6 +72,18 @@ const UI = {
     st_res: 'Ресурсы и энергия', st_anom: 'Аномалии и состояния', st_quirks: 'Парадоксы', st_other: 'Прочее',
     r_all: 'Все заезды', r_crit: 'Сюжетные', r_supply: 'За припасами', r_exp: 'Экспедиции',
     c_total: 'Всего', c_succ: 'Успешно', c_fail: 'Провалено', c_sstreak: 'Серия успехов', c_fstreak: 'Серия провалов',
+    tab_map: 'Карта', map_hint: 'Стол планирования: развилки и дороги из игры. Колёсико — масштаб, перетаскивание — прокрутка, клик по развилке — её параметры.',
+    map_reveal_all: 'Открыть всю карту', map_instability: 'Нестабильность', map_current: 'Здесь машина', map_make_current: 'Сделать текущей',
+    map_discovered: 'Обнаружена', map_visited: 'Посещена', map_revealable: 'Можно разведать', map_anchors: 'Якорей для выхода',
+    map_anchor_type: 'Тип якорей', map_mods: 'Модификаторы', map_hazards: 'Аномалии', map_boons: 'Бонусы', map_events: 'События',
+    map_spawn: 'Параметры вылазки', map_add: '+ добавить…', map_other: 'Прочие теги', map_state_mod: 'состояние',
+    a_Stable: 'Стабильные', a_Unstable: 'Нестабильные', a_Corrupted: 'Дефектные', map_route: 'Маршрут', map_zone: 'Зона',
+    packs: 'Паки и дополнения', packs_hint: 'Отметьте паки кастомизации и дополнения, которые у вас куплены. Предметы, записи журнала и исследования из неотмеченных паков скрываются и не могут быть добавлены, а кнопка ниже убирает их из сохранения — иначе игра без пака может не загрузить сейв.',
+    packs_unset: 'Паки ещё не отмечены — пока редактор ничего не ограничивает.', packs_in_save: 'в этом сейве', packs_save: 'Сохранить выбор',
+    packs_clean: 'Почистить сохранение от неотмеченных паков', packs_nothing: 'В сохранении нет содержимого неотмеченных паков.',
+    packs_confirm: 'Будет удалено: предметов {items}, записей журнала {logbook}, узлов исследований {research}, рецептов {recipes}. Продолжить? (Сохранение запишется только по кнопке «Сохранить».)',
+    packs_cleaned: 'Удалено: предметов {items}, записей журнала {logbook}, исследований {research}, рецептов {recipes}', pack_badge: 'пак',
+    pack_locked: 'Этот пак не отмечен как купленный (Сводка → Паки)', add_all: 'Добавить все', add_all_done: 'Добавлено предметов: ',
     q_invocations: 'срабатываний', q_diag: 'Диагностирован', q_undiag: 'Не диагностирован', q_diagnose: 'Диагностировать',
     q_fix: 'Исправить', q_cure: 'Для починки', q_add: 'Добавить парадокс', q_when: 'Когда', q_what: 'Что происходит',
     q_add_btn: '+ Добавить', q_add_diag: 'сразу диагностирован', q_grave: 'Исправленные ранее', q_revivals: 'возвратов',
@@ -133,6 +145,18 @@ const UI = {
     st_res: 'Resources & energy', st_anom: 'Anomalies & statuses', st_quirks: 'Quirks', st_other: 'Other',
     r_all: 'All runs', r_crit: 'Story', r_supply: 'Supply', r_exp: 'Expeditions',
     c_total: 'Total', c_succ: 'Successful', c_fail: 'Failed', c_sstreak: 'Success streak', c_fstreak: 'Failure streak',
+    tab_map: 'Map', map_hint: 'The planning table: junctions and roads from the game. Wheel zooms, drag pans, click a junction for its settings.',
+    map_reveal_all: 'Reveal whole map', map_instability: 'Instability', map_current: 'Car is here', map_make_current: 'Make current',
+    map_discovered: 'Discovered', map_visited: 'Visited', map_revealable: 'Revealable', map_anchors: 'Anchors to exit',
+    map_anchor_type: 'Anchor type', map_mods: 'Modifiers', map_hazards: 'Anomalies', map_boons: 'Boons', map_events: 'Events',
+    map_spawn: 'Run parameters', map_add: '+ add…', map_other: 'Other tags', map_state_mod: 'state',
+    a_Stable: 'Stable', a_Unstable: 'Unstable', a_Corrupted: 'Corrupted', map_route: 'Route', map_zone: 'Zone',
+    packs: 'Packs & expansions', packs_hint: 'Tick the customization packs and expansions you own. Items, logbook entries and research from unticked packs are hidden and cannot be added; the button below removes them from the save — the game may refuse to load a save with content from a pack you do not own.',
+    packs_unset: 'No packs ticked yet — the editor does not restrict anything until you do.', packs_in_save: 'in this save', packs_save: 'Save selection',
+    packs_clean: 'Remove unticked packs from the save', packs_nothing: 'The save has no content from unticked packs.',
+    packs_confirm: 'This removes {items} items, {logbook} logbook entries, {research} research nodes and {recipes} recipes. Continue? (The file is written only when you press Save.)',
+    packs_cleaned: 'Removed: {items} items, {logbook} logbook entries, {research} research, {recipes} recipes', pack_badge: 'pack',
+    pack_locked: 'This pack is not ticked as owned (Summary → Packs)', add_all: 'Add all', add_all_done: 'Items added: ',
     q_invocations: 'triggers', q_diag: 'Diagnosed', q_undiag: 'Not diagnosed', q_diagnose: 'Diagnose',
     q_fix: 'Fix', q_cure: 'Fix needs', q_add: 'Add a quirk', q_when: 'When', q_what: 'What happens',
     q_add_btn: '+ Add', q_add_diag: 'already diagnosed', q_grave: 'Fixed before', q_revivals: 'revivals',
@@ -186,6 +210,11 @@ const L = obj => (obj && (obj[lang] || obj.en || Object.values(obj)[0])) || '';
 const item = a => (a && GD.items[a]) || { id: (a || '?').split('.').pop(), name: {}, desc: {}, size: [2, 2], stack: 1, category: '' };
 const itemName = a => L(item(a).name) || item(a).id;
 const catOf = c => CATS.find(([, f]) => f(c || ''));
+const itemPacks = a => (GD.items[a] && GD.items[a].dlc && GD.items[a].dlc.length) ? GD.items[a].dlc : ((a || '').startsWith('/PDFeature_Fig/') ? ['DlcFig'] : []);
+const packOwned = id => !ST || ST.ownedPacks === null || ST.ownedPacks === undefined || ST.ownedPacks.includes(id);
+const packBlocked = a => itemPacks(a).some(p => !packOwned(p));
+const packName = id => ((GD.packs || []).find(p => p.id === id) || {}).name || id;
+const fmtT = (s, o) => s.replace(/\{(\w+)\}/g, (_, k) => o[k] ?? '');
 const tileColor = a => catOf(item(a).category)[2];
 const fmt = v => (v === null || v === undefined) ? '—' : (Math.abs(v - Math.round(v)) < 1e-6 ? String(Math.round(v)) : v.toFixed(1));
 
@@ -256,9 +285,13 @@ async function boot() {
   document.addEventListener('keydown', onKey);
   document.addEventListener('mousemove', e => { mouse = { x: e.clientX, y: e.clientY }; if (placing) updateGhost(); });
   setupResearchCanvas();
+  setupPanZoom($('#mapCanvas'), mapView, applyMapView);
   await loadSaves();
   try { const r = await fetch('/api/state', { method: 'POST', body: '{}' }); if (r.ok) ST = await r.json(); } catch (e) { /* no save yet */ }
   render();
+  const [tab, sel] = location.hash.slice(1).split(':');
+  if (tab === 'map' && sel) legSel = sel;
+  if (tab && $('#tab-' + tab)) switchTab(tab);
 }
 
 async function loadSaves() {
@@ -280,6 +313,7 @@ function switchTab(name) {
   for (const s of document.querySelectorAll('.tab')) s.classList.toggle('active', s.id === 'tab-' + name);
   cancelPlacing();
   if (name === 'research') renderResearch();
+  if (name === 'map') renderMap();
 }
 
 function render() {
@@ -294,6 +328,7 @@ function render() {
   renderCatalog($('#catalogPanel'));
   renderCar(); renderEconomy(); renderSettings(); renderSummary(); renderCodex(); renderStats();
   if ($('#tab-research').classList.contains('active')) renderResearch();
+  if ($('#tab-map').classList.contains('active')) renderMap();
 }
 
 // ------------------------------------------------------------------ containers
@@ -346,6 +381,9 @@ function renderContView() {
   const extra = c.kind === 'grid' ? `  ${c.w}×${c.h}` : '';
   $('#gridTitle').textContent = contLabel(c) + extra;
   $('#gridHint').textContent = t(c.kind + '_hint');
+  if (c.kind === 'list' && c.addAll)
+    box.append(h('div', { class: 'row', style: 'margin-bottom:8px' }, h('button', { class: 'primary small', onclick: async () => {
+      const r = await api('add_all', { cont: c.guid }); toast(t('add_all_done') + r.added); } }, `＋ ${t('add_all')} (${c.addAll})`)));
   if (c.kind === 'grid') renderGrid(c, box);
   else if (c.kind === 'list') renderList(c, box);
   else renderNamed(c, box);
@@ -684,7 +722,9 @@ function catalogItems(filterFn) {
   return Object.entries(GD.items)
     .filter(([a, it]) => !HIDDEN_ITEM.test(it.id) && (L(it.name) || '').trim())
     .filter(([a, it]) => !filterFn || filterFn(a, it))
-    .filter(([a, it]) => catFilter === 'all' || catOf(it.category)[0] === catFilter)
+    .filter(([a, it]) => !packBlocked(a))
+    .filter(([a, it]) => catFilter === 'all' || (catFilter.startsWith('pack:') ? itemPacks(a).includes(catFilter.slice(5))
+      : !itemPacks(a).length && catOf(it.category)[0] === catFilter))
     .filter(([a, it]) => !q || itemName(a).toLowerCase().includes(q) || it.id.toLowerCase().includes(q) || (it.name.en || '').toLowerCase().includes(q))
     .sort((x, y) => itemName(x[0]).localeCompare(itemName(y[0]), lang));
 }
@@ -702,7 +742,8 @@ function renderCatalog(panel) {
       const el = h('div', { class: 'cat-item' + (placing && placing.arche === a && !placing.moveSlot ? ' active' : '') },
         h('div', { class: 'ic', style: `--tile:${tileColor(a)}` }, itemIcon(a)),
         h('div', { class: 'nm' }, itemName(a)),
-        h('div', { class: 'sz' }, `${it.size[0]}×${it.size[1]} · ${it.stack}`));
+        h('div', { class: 'sz' }, `${it.size[0]}×${it.size[1]} · ${it.stack}`),
+        itemPacks(a).length ? h('span', { class: 'pack-badge', title: itemPacks(a).map(packName).join(', ') }, '📦') : null);
       el.onclick = () => onCatalogPick(a, el);
       el.addEventListener('mouseenter', () => showTip(a, 0));
       el.addEventListener('mouseleave', hideTip);
@@ -712,6 +753,9 @@ function renderCatalog(panel) {
   for (const key of ['all', ...CATS.map(x => x[0])])
     cats.append(h('button', { class: key === catFilter ? 'active' : '', onclick: () => { catFilter = key; renderCatalog(panel); } },
       key === 'all' ? t('all') : t('cat_' + key)));
+  for (const p of (GD.packs || []).filter(p => packOwned(p.id) && Object.values(GD.items).some(it => (it.dlc || []).includes(p.id))))
+    cats.append(h('button', { class: 'pack-chip' + ('pack:' + p.id === catFilter ? ' active' : ''), onclick: () => { catFilter = 'pack:' + p.id; renderCatalog(panel); } },
+      '📦 ' + p.name));
   search.oninput = () => { catSearch = search.value; fill(); };
   panel.append(h('h3', {}, t('catalog')), search, cats, list);
   fill();
@@ -889,10 +933,11 @@ function renderResearch() {
   inner.append(svg);
   for (const n of Object.values(N)) {
     const st = nodeState(n.id);
-    const el = h('div', { class: `rnode ${st} ${n.kind}` + (n.id === nodeSel ? ' selected' : ''), style: `left:${n.x - minX}px;top:${n.y - minY}px;width:${NS}px;height:${NS}px`,
+    const el = h('div', { class: `rnode ${st} ${n.kind}` + (n.id === nodeSel ? ' selected' : '') + (n.product && packBlocked(n.product) ? ' pack-blocked' : ''), style: `left:${n.x - minX}px;top:${n.y - minY}px;width:${NS}px;height:${NS}px`,
       onclick: () => { nodeSel = n.id; renderResearch(); } },
       h('div', { class: 'ric' }, nodeIcon(n)),
       h('div', { class: 'rname' }, nodeTitle(n)),
+      n.product && itemPacks(n.product).length ? h('span', { class: 'rpack', title: itemPacks(n.product).map(packName).join(', ') }, '📦') : null,
       st === 'installed' ? h('span', { class: 'rbadge' }, '✓') : st === 'researched' && n.kind === 'upgrade' && n.upgrade.includes('/UP_Garage') ? h('span', { class: 'rbadge warn' }, '!') : null);
     inner.append(el);
   }
@@ -924,6 +969,10 @@ function renderNodePanel() {
       h('div', { class: 'big-icon', style: n.kind === 'recipe' ? `--tile:${tileColor(n.product)}` : '' }, nodeIcon(n)),
       h('div', {}, h('div', { class: 'name' }, nodeTitle(n)), h('span', { class: 'tag' }, t('s_' + st)))),
     h('div', { class: 'desc' }, desc));
+  if (n.product && packBlocked(n.product)) {
+    box.append(h('div', { class: 'hint warn', style: 'margin:8px 0' }, '📦 ' + t('pack_locked') + ': ' + itemPacks(n.product).map(packName).join(', ')));
+    return;
+  }
   const states = h('div', { class: 'switch', style: 'margin:8px 0' });
   for (const s of ['locked', 'available', 'researched'])
     states.append(h('button', { class: (st === s || (s === 'researched' && st === 'installed')) ? 'on' : '',
@@ -994,14 +1043,15 @@ const entryIcon = (p, e) => e.item ? itemIcon(p) : (e.icon ? icon(e.icon, e.tint
 function renderCodex() {
   if (!GD.logbook) return;
   const LB = GD.logbook, opened = openLog();
-  const all = Object.entries(LB.entries);
+  const all = Object.entries(LB.entries).filter(([p]) => !packBlocked(p));
+  const entryPack = p => itemPacks(p)[0];
   if (!codexCat) codexCat = LB.categories[0].tag;
   // categories
   const cbox = $('#codexCats');
   cbox.innerHTML = '';
   cbox.append(h('h3', {}, t('tab_codex')));
   for (const c of LB.categories) {
-    const es = all.filter(([, e]) => e.cat === c.tag);
+    const es = all.filter(([p, e]) => e.cat === c.tag && !entryPack(p));
     if (!es.length) continue;
     const open = es.filter(([p]) => opened.has(p)).length;
     cbox.append(h('button', { class: 'cont-btn codex-cat' + (c.tag === codexCat ? ' active' : ''), onclick: () => { codexCat = c.tag; codexSub = null; renderCodex(); } },
@@ -1015,11 +1065,18 @@ function renderCodex() {
       }
     }
   }
+  for (const pk of (GD.packs || [])) {
+    const es = all.filter(([p]) => entryPack(p) === pk.id);
+    if (!es.length) continue;
+    cbox.append(h('button', { class: 'cont-btn codex-cat pack-chip' + ('pack:' + pk.id === codexCat ? ' active' : ''), onclick: () => { codexCat = 'pack:' + pk.id; codexSub = null; renderCodex(); } },
+      h('span', {}, '📦 ' + pk.name), h('small', {}, `${es.filter(([p]) => opened.has(p)).length}/${es.length}`)));
+  }
   // grid
+  const isPackCat = codexCat.startsWith('pack:');
   const cat = LB.categories.find(c => c.tag === codexCat) || {};
-  $('#codexTitle').textContent = L(cat.name) + (codexSub ? ' · ' + L((LB.subcategories.find(s => s.tag === codexSub) || {}).name) : '');
+  $('#codexTitle').textContent = isPackCat ? '📦 ' + packName(codexCat.slice(5)) : L(cat.name) + (codexSub ? ' · ' + L((LB.subcategories.find(s => s.tag === codexSub) || {}).name) : '');
   const q = codexSearch.toLowerCase();
-  const list = all.filter(([p, e]) => e.cat === codexCat && (!codexSub || e.sub === codexSub))
+  const list = all.filter(([p, e]) => isPackCat ? entryPack(p) === codexCat.slice(5) : (e.cat === codexCat && !entryPack(p) && (!codexSub || e.sub === codexSub)))
     .filter(([p]) => codexFilter === 'all' || (codexFilter === 'open') === opened.has(p))
     .filter(([p, e]) => !q || entryName(p, e).toLowerCase().includes(q))
     .sort((a, b) => entryName(a[0], a[1]).localeCompare(entryName(b[0], b[1]), lang));
@@ -1179,7 +1236,7 @@ function renderSummary() {
   ];
   const g = h('div', { class: 'summary-grid' });
   for (const [k, v] of rows) g.append(h('div', {}, k), h('div', {}, v === undefined || v === null ? '—' : v));
-  box.append(g, h('p', { class: 'hint', style: 'margin-top:16px' }, `PD Save Editor ${GD.version || ''}`),
+  box.append(g, packsPanel(), h('p', { class: 'hint', style: 'margin-top:16px' }, `PD Save Editor ${GD.version || ''}`),
     h('button', { class: 'small', onclick: () => showSetup(true) }, t('redo_setup')));
 }
 
@@ -1400,4 +1457,201 @@ async function showSetup(force = false) {
     h('div', { class: 'row', style: 'margin-top:10px' }, go, force ? h('button', { class: 'ghost', onclick: () => box.classList.add('hidden') }, '✕') : null),
     status, logBox));
   if (st.running) { go.disabled = true; poll(); }
+}
+
+
+// ------------------------------------------------------------------ packs (customization packs / expansions)
+function packsPanel() {
+  const box = h('div', { class: 'packs-panel' }, h('h3', { style: 'margin-top:18px' }, '📦 ' + t('packs')), h('p', { class: 'hint' }, t('packs_hint')));
+  const owned = new Set(ST.ownedPacks || []);
+  if (ST.ownedPacks === null || ST.ownedPacks === undefined) box.append(h('p', { class: 'hint warn' }, t('packs_unset')));
+  const present = (ST.packReport || {}).present || {};
+  const checks = [];
+  for (const p of GD.packs || []) {
+    const cb = h('input', { type: 'checkbox', checked: owned.has(p.id) });
+    checks.push([p.id, cb]);
+    box.append(h('label', { class: 'row pack-row' }, cb, h('b', {}, p.name),
+      p.steam ? h('span', { class: 'hint' }, ` · Steam ${p.steam}`) : null,
+      present[p.id] ? h('span', { class: 'tag' }, `${present[p.id]} ${t('packs_in_save')}`) : null));
+  }
+  const rm = (ST.packReport || {}).remove || {};
+  const total = (rm.items || 0) + (rm.logbook || 0) + (rm.research || 0) + (rm.recipes || 0);
+  box.append(h('div', { class: 'row', style: 'margin-top:8px' },
+    h('button', { class: 'small', onclick: () => quiet(api('packs_set', { owned: checks.filter(([, c]) => c.checked).map(([id]) => id) })) }, t('packs_save')),
+    h('button', { class: 'small danger', disabled: !total || ST.ownedPacks == null, onclick: async () => {
+      if (!confirm(fmtT(t('packs_confirm'), rm))) return;
+      const r = await api('packs_clean');
+      toast(fmtT(t('packs_cleaned'), r.cleaned || {}));
+    } }, `🧹 ${t('packs_clean')}${total ? ` (${total})` : ''}`),
+    !total && ST.ownedPacks != null ? h('span', { class: 'hint' }, t('packs_nothing')) : null));
+  return box;
+}
+
+
+// ------------------------------------------------------------------ route map (planning table)
+let mapView = { x: 0, y: 0, z: 0.4, init: false }, legSel = null;
+function applyMapView() { $('#mapInner').style.transform = `translate(${mapView.x}px,${mapView.y}px) scale(${mapView.z})`; }
+function setupPanZoom(cv, vw, apply) {
+  let drag = null;
+  cv.addEventListener('mousedown', e => { if (e.button === 0) drag = { x: e.clientX, y: e.clientY, vx: vw.x, vy: vw.y, moved: false }; });
+  window.addEventListener('mousemove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+    vw.x = drag.vx + dx; vw.y = drag.vy + dy; apply();
+  });
+  window.addEventListener('mouseup', () => { setTimeout(() => { drag = null; }, 0); });
+  cv.addEventListener('click', e => { if (drag && drag.moved) e.stopPropagation(); }, true);
+  cv.addEventListener('wheel', e => {
+    e.preventDefault();
+    const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    const z = Math.min(3, Math.max(0.15, vw.z * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+    vw.x = mx - (mx - vw.x) * z / vw.z; vw.y = my - (my - vw.y) * z / vw.z; vw.z = z;
+    apply();
+  }, { passive: false });
+}
+
+const SPAWN_LABELS = {
+  'WB.Modifiers.Spawning.Anchors.AnchorJuiceInMap': ['Якорная энергия на карте', 'Anchor energy on the map'],
+  'WB.Modifiers.Spawning.Hazards.Density': ['Плотность аномалий', 'Anomaly density'],
+  'WB.Modifiers.Spawning.ResourceProviders.Density': ['Источники ресурсов', 'Resource sources'],
+  'WB.Modifiers.Spawning.Vehicles.Density': ['Брошенные машины', 'Abandoned cars'],
+  'WB.Modifiers.Spawning.Buildings.Density': ['Здания', 'Buildings'],
+  'WB.Modifiers.Spawning.FuelSources.GasBarrels.Density': ['Бочки с топливом', 'Fuel barrels'],
+  'WB.Modifiers.Spawning.RadiationSpots.Density': ['Радиоактивные зоны', 'Radiation spots'],
+  'WB.Modifiers.Storm.TimeToStart': ['Время до бури', 'Time before the storm'],
+  'WB.Modifiers.Storm.SpeedModifier': ['Скорость бури', 'Storm speed'],
+  'WB.Modifiers.GameplayEvents.CooldownMultiplier': ['Перерыв между событиями', 'Event cooldown'],
+  'WB.Modifiers.Damage.ImpactBypass': ['Урон в обход защиты (удары)', 'Impact damage bypass'],
+};
+const ruish = () => lang === 'ru' || lang === 'uk';
+const spawnName = cls => { const lb = (GD.spawnables || {})[cls]; const e = lb && GD.logbook.entries[lb]; return (e && L(e.name)) || cls.split('.').pop().replace(/_C$/, '').replace(/^(BP_Hazard_|BP_Boon_|GEV_|BP_Spawn_|PFX_Boon_)/, ''); };
+const spawnIcon = cls => { const lb = (GD.spawnables || {})[cls]; const e = lb && GD.logbook.entries[lb]; return e && e.icon ? icon(e.icon, e.tint) : h('span', {}, '◆'); };
+const modInfo = rm => (GD.modifiers || {})[rm] || { id: (rm || '').split('.').pop(), name: {} };
+const modName = rm => L(modInfo(rm).name) || modInfo(rm).id.replace(/^RM_/, '');
+const legLabel = (name, w) => L((w || {}).junction) || name.replace('RouteShapeLeg_', '#');
+
+function edgePath(e, legs) {
+  const a = legs[e.from], b = legs[e.to];
+  if (!a || !b) return '';
+  let d = `M${a.x},${a.y}`, prev = { x: a.x, y: a.y, out: [0, 0] };
+  const pts = (e.points || []).map(p => ({ x: a.x + p.p[0], y: a.y + p.p[1], in: p.in || [0, 0], out: p.out || [0, 0] }));
+  for (const p of pts.concat([{ x: b.x, y: b.y, in: [0, 0], out: [0, 0] }])) {
+    const c1 = [prev.x + prev.out[0] / 3, prev.y + prev.out[1] / 3], c2 = [p.x - p.in[0] / 3, p.y - p.in[1] / 3];
+    d += ` C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p.x},${p.y}`;
+    prev = p;
+  }
+  return d;
+}
+
+function renderMap() {
+  if (!ST || !ST.map || !GD.worldmap) return;
+  const W = GD.worldmap, M = ST.map, inner = $('#mapInner');
+  inner.innerHTML = '';
+  inner.style.width = '2048px'; inner.style.height = '2048px';
+  if (!mapView.init) {
+    const cv = $('#mapCanvas').getBoundingClientRect();
+    mapView.z = Math.min(cv.width, cv.height) / 2048; mapView.x = (cv.width - 2048 * mapView.z) / 2; mapView.y = (cv.height - 2048 * mapView.z) / 2; mapView.init = true;
+  }
+  applyMapView();
+  if (W.background) inner.append(h('img', { src: '/gamedata/' + W.background, class: 'map-bg', draggable: 'false' }));
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', 2048); svg.setAttribute('height', 2048); svg.setAttribute('class', 'redges');
+  for (const e of W.edges) {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', edgePath(e, W.legs));
+    const known = (M.legs[e.from] || {}).discovered && (M.legs[e.to] || {}).discovered;
+    path.setAttribute('class', 'road' + (known ? ' known' : ''));
+    svg.append(path);
+  }
+  inner.append(svg);
+  for (const [name, w] of Object.entries(W.legs)) {
+    const st = M.legs[name] || {};
+    const sz = Math.max(40, (w.size || 64) * 0.7);
+    const cls = 'leg' + (st.discovered ? ' discovered' : ' hidden') + (st.visited ? ' visited' : '') + (name === M.current ? ' current' : '') + (name === legSel ? ' selected' : '');
+    inner.append(h('div', { class: cls, style: `left:${w.x - sz / 2}px;top:${w.y - sz / 2}px;width:${sz}px;height:${sz}px`, title: legLabel(name, w),
+      onclick: () => { legSel = name; renderMap(); } },
+      w.icon ? icon(w.icon) : null, h('span', { class: 'leg-id' }, legLabel(name, w)),
+      name === M.current ? h('span', { class: 'leg-car' }, '🚗') : null,
+      st.anchors ? h('span', { class: 'leg-anchors', title: t('map_anchors') }, '⚓' + st.anchors) : null));
+  }
+  const tools = $('#mapTools');
+  tools.innerHTML = '';
+  const inst = h('input', { type: 'number', step: 'any', min: 0, value: +(+M.instability).toFixed(2), style: 'width:80px' });
+  inst.onchange = () => quiet(api('map_instability', { value: parseFloat(inst.value) || 0 }));
+  tools.append(h('span', { class: 'hint' }, t('map_instability') + ':'), inst,
+    h('button', { class: 'small', onclick: () => quiet(api('map_reveal_all')) }, '👁 ' + t('map_reveal_all')));
+  renderLegPanel();
+}
+
+function chipList(items, nameFn, iconFn, onRemove) {
+  const box = h('div', { class: 'effects' });
+  for (const x of items) box.append(h('span', { class: 'chip' }, h('span', { class: 'chip-ic' }, iconFn(x)), nameFn(x),
+    h('button', { class: 'x', title: t('del'), onclick: () => onRemove(x) }, '×')));
+  return box;
+}
+
+function renderLegPanel() {
+  const box = $('#legPanel');
+  box.innerHTML = '';
+  const W = GD.worldmap, M = ST.map, name = legSel, w = name && W.legs[name], st = name && M.legs[name];
+  if (!w || !st) { box.append(h('div', { class: 'hint' }, t('map_hint'))); return; }
+  const leg = name;
+  box.append(h('div', { class: 'row', style: 'gap:10px;margin-bottom:6px' },
+    h('div', { class: 'big-icon', style: 'width:64px;height:64px' }, w.icon ? icon(w.icon) : null),
+    h('div', {}, h('div', { class: 'name' }, legLabel(name, w) + (L(w.name) ? ' · ' + L(w.name) : '')),
+      h('div', { class: 'hint' }, [L(w.type), L(w.zone)].filter(Boolean).join(' · ')),
+      st.route ? h('div', { class: 'hint' }, `${t('map_route')}: ${st.route}`) : null)));
+  const flags = h('div', { class: 'row', style: 'margin:6px 0' });
+  for (const f of ['Discovered', 'Visited', 'Revealable'])
+    flags.append(h('label', { class: 'row' }, h('input', { type: 'checkbox', checked: st[f.toLowerCase()], onchange: e => quiet(api('map_flag', { leg, flag: f, on: e.target.checked })) }),
+      ' ' + t('map_' + f.toLowerCase())));
+  box.append(flags, h('div', { class: 'row' },
+    name === M.current ? h('span', { class: 'tag' }, '🚗 ' + t('map_current')) : h('button', { class: 'small', onclick: () => quiet(api('map_current', { leg })) }, '🚗 ' + t('map_make_current'))));
+  // anchors
+  const anc = h('input', { type: 'number', min: 0, value: st.anchors, style: 'width:70px' });
+  anc.onchange = () => quiet(api('map_anchors', { leg, value: parseInt(anc.value) || 0 }));
+  const types = ['Stable', 'Unstable', 'Corrupted'];
+  const curType = types.find(x => (st.wb['WB.Modifiers.Anchors.Type.' + x] || 0) > 0) || '';
+  const tsel = h('select', {}, h('option', { value: '' }, '—'), types.map(x => h('option', { value: x, selected: x === curType }, t('a_' + x))));
+  tsel.onchange = async () => {
+    for (const x of types) if (x !== tsel.value && ('WB.Modifiers.Anchors.Type.' + x) in st.wb) await api('map_wb', { leg, tag: 'WB.Modifiers.Anchors.Type.' + x, value: null });
+    if (tsel.value) await quiet(api('map_wb', { leg, tag: 'WB.Modifiers.Anchors.Type.' + tsel.value, value: 1 }));
+  };
+  box.append(h('div', { class: 'field-row' }, h('span', { class: 'fl' }, t('map_anchors')), h('span'), anc),
+    h('div', { class: 'field-row tint-row' }, h('span', { class: 'fl' }, t('map_anchor_type')), tsel));
+  // spawn / storm multipliers
+  box.append(h('h3', { style: 'margin-top:12px' }, t('map_spawn')));
+  for (const [tag, lab] of Object.entries(SPAWN_LABELS)) {
+    const has = tag in st.wb, v = has ? st.wb[tag] : 1;
+    const out = h('span', { class: 'val' }, has ? v.toFixed(2) : '—');
+    const r = h('input', { type: 'range', min: 0, max: 3, step: 0.05, value: v });
+    r.oninput = () => { out.textContent = parseFloat(r.value).toFixed(2); };
+    r.onchange = () => quiet(api('map_wb', { leg, tag, value: parseFloat(r.value) }));
+    box.append(h('div', { class: 'field-row' + (has ? '' : ' unset') }, h('span', { class: 'fl', title: tag }, ruish() ? lab[0] : lab[1]), r, out));
+  }
+  // modifiers
+  const mods = st.modifiers;
+  box.append(h('h3', { style: 'margin-top:12px' }, t('map_mods')),
+    chipList(mods, rm => modName(rm) + (modInfo(rm).state ? ` (${t('map_state_mod')})` : ''), rm => modInfo(rm).icon ? icon(modInfo(rm).icon, modInfo(rm).tint) : '◆',
+      rm => quiet(api('map_mod', { leg, rm, on: false }))));
+  const madd = h('select', {}, h('option', { value: '' }, t('map_add')));
+  for (const [rm, mi] of Object.entries(GD.modifiers || {}).filter(([rm, mi]) => L(mi.name) && !mods.includes(rm)).sort((a, b) => modName(a[0]).localeCompare(modName(b[0]), lang)))
+    madd.append(h('option', { value: rm, title: L(mi.desc) }, modName(rm) + (mi.state ? ` (${t('map_state_mod')})` : '')));
+  madd.onchange = () => madd.value && quiet(api('map_mod', { leg, rm: madd.value, on: true }));
+  box.append(madd);
+  // hazards / boons / events
+  const kinds = [['hazards', /\/BP_Hazard_/], ['boons', /\/(BP_Boon_|PFX_Boon_|BP_Spawn_)/], ['events', /\/GEV_/]];
+  for (const [kind, rx] of kinds) {
+    box.append(h('h3', { style: 'margin-top:12px' }, t('map_' + kind)),
+      chipList(st[kind], spawnName, spawnIcon, cls => quiet(api('map_pool', { leg, kind, cls, on: false }))));
+    const sel = h('select', {}, h('option', { value: '' }, t('map_add')));
+    for (const cls of Object.keys(GD.spawnables || {}).filter(c => rx.test(c) && !st[kind].includes(c)).sort((a, b) => spawnName(a).localeCompare(spawnName(b), lang)))
+      sel.append(h('option', { value: cls }, spawnName(cls)));
+    sel.onchange = () => sel.value && quiet(api('map_pool', { leg, kind, cls: sel.value, on: true }));
+    box.append(sel);
+  }
+  const other = Object.keys(st.wb).filter(k => !(k in SPAWN_LABELS) && !k.startsWith('WB.Modifiers.Anchors.Type.') && !k.startsWith('WB.Routes.'));
+  if (other.length) box.append(h('details', { style: 'margin-top:10px' }, h('summary', { class: 'hint' }, `${t('map_other')} (${other.length})`),
+    ...other.map(k => h('div', { class: 'wb-row' }, h('code', {}, k), h('span', {}, String(+(+st.wb[k]).toFixed(3))), h('span')))));
 }
