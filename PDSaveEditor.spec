@@ -47,8 +47,26 @@ def slim_qt(toc):
     return out
 
 
+# Libraries that must come from the user's system, not the build machine: the C++ runtime and the
+# graphics/display stack have to match the host GPU drivers (an old bundled libstdc++ breaks Mesa/EGL
+# and QtWebEngine aborts before the window appears). Same idea as the AppImage project's excludelist.
+HOST_LIBS = r'^lib(stdc\+\+|gcc_s|EGL|GL|GLX|GLdispatch|OpenGL|gbm|drm|wayland-[a-z]+|X11|X11-xcb|Xext|Xrender|Xfixes|' \
+            r'Xi|Xrandr|Xcursor|Xinerama|Xau|Xdmcp|xcb-[a-z0-9-]+|xkbcommon|xkbcommon-x11|xkbfile|fontconfig|freetype|' \
+            r'harfbuzz|glib-2\.0|gio-2\.0|gobject-2\.0|gmodule-2\.0|gthread-2\.0|pcre2-8|dbus-1|asound|va|va-drm|' \
+            r'udev|systemd|selinux|mount|blkid)\.so'
+
+
+def drop_host_libs(toc):
+    import re
+
+    def is_host(name):
+        # wheels vendor private copies with a hash in the name (libxcb-b8a56d01.so.1.1.0): keep those
+        return re.match(HOST_LIBS, name) and not re.search(r'-[0-9a-f]{8}\.so', name)
+    return [e for e in toc if not is_host(os.path.basename(e[0]))]
+
+
 if sys.platform.startswith('linux'):
-    a.binaries = slim_qt(a.binaries)
+    a.binaries = drop_host_libs(slim_qt(a.binaries))
     a.datas = slim_qt(a.datas)
 
 pyz = PYZ(a.pure)

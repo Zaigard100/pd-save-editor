@@ -133,6 +133,7 @@ class App:
         self.setup = {'running': False, 'log': [], 'error': None}
         self.server = None
         self.window = None
+        self.page_loaded = False     # set when the UI asked for /api/gamedata (proves the window works)
         self.load_gamedata()
 
     def gamedata_ready(self):
@@ -334,6 +335,7 @@ class Handler(SimpleHTTPRequestHandler):
         elif path == '/api/saves':
             return self.send_json(200, self.app.saves())
         elif path == '/api/gamedata':
+            self.app.page_loaded = True
             gd = self.app.gd
             return self.send_json(200, dict(gd, version=__version__) if gd else {'missing': True, 'version': __version__})
         elif not (path.startswith('/web/') or path.startswith('/gamedata/')):
@@ -419,6 +421,19 @@ def open_window(url, app):
             return bool(win.create_confirmation_dialog(title, text))
         return True
     win.events.closing += on_closing
+
+    def watchdog():
+        # a window that never loads the page (broken WebView2 / GPU stack) -> close it, the caller opens the browser
+        for _ in range(50):
+            if app.page_loaded or app.window is None:
+                return
+            threading.Event().wait(0.5)
+        print('The app window did not load the editor in 25 s; switching to the web browser.')
+        try:
+            win.destroy()
+        except Exception:  # noqa: BLE001
+            pass
+    threading.Thread(target=watchdog, daemon=True).start()
     gui = 'qt' if sys.platform.startswith('linux') else None
     try:
         webview.start(gui=gui, private_mode=False, storage_path=os.path.join(app.data_dir, 'webview'),
@@ -427,7 +442,64 @@ def open_window(url, app):
         print('Native window is not available (%s); using the web browser instead.' % e)
         app.window = None
         return False
+    app.window = None
+    if not app.page_loaded:
+        print('The app window closed without loading the editor; using the web browser instead.')
+        return False
     return True
+
+
+class _Tee:
+    def __init__(self, *streams):
+        self.streams = [s for s in streams if s is not None]
+
+    def write(self, data):
+        for s in self.streams:
+            try:
+                s.write(data)
+                s.flush()
+            except Exception:  # noqa: BLE001
+                pass
+
+    def flush(self):
+        pass
+
+
+def log_path():
+    return os.path.join(user_data_dir(), 'pdsave-editor.log')
+
+
+def setup_log_file():
+    """Packaged builds: keep a log next to the user data (the Windows build has no console)."""
+    try:
+        os.makedirs(user_data_dir(), exist_ok=True)
+        if os.path.exists(log_path()) and os.path.getsize(log_path()) > 2_000_000:
+            os.replace(log_path(), log_path() + '.old')
+        log = open(log_path(), 'a', encoding='utf-8', buffering=1)
+        import datetime
+        log.write('\n==== %s  PD Save Editor %s  %s\n' % (datetime.datetime.now().isoformat(' ', 'seconds'),
+                                                        __version__, sys.platform))
+        sys.stdout = _Tee(sys.stdout, log)
+        sys.stderr = _Tee(sys.stderr, log)
+    except OSError:
+        pass
+
+
+def report_fatal(exc_text):
+    """Last-resort error report: log file + a message box on Windows (no console there)."""
+    try:
+        os.makedirs(user_data_dir(), exist_ok=True)
+        with open(log_path(), 'a', encoding='utf-8') as f:
+            f.write(exc_text)
+    except OSError:
+        pass
+    if os.name == 'nt':
+        try:
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(None, 'PD Save Editor failed to start:\n\n%s\n\nLog: %s'
+                                             % (exc_text[-1500:], log_path()), 'PD Save Editor', 0x10)
+        except Exception:  # noqa: BLE001
+            pass
 
 
 def main():
@@ -439,11 +511,8 @@ def main():
     ap.add_argument('--data', help='folder for extracted game data (default: user data folder)')
     ap.add_argument('--version', action='version', version=__version__)
     a = ap.parse_args()
-    if sys.stdout is None or sys.stderr is None:      # windowed build (no console): log to a file
-        os.makedirs(user_data_dir(), exist_ok=True)
-        log = open(os.path.join(user_data_dir(), 'pdsave-editor.log'), 'a', encoding='utf-8', buffering=1)
-        sys.stdout = sys.stdout or log
-        sys.stderr = sys.stderr or log
+    if getattr(sys, 'frozen', False) or sys.stdout is None:
+        setup_log_file()
     # running from a source checkout with gamedata/ next to the code keeps using it
     data_dir = a.data or (HERE if not getattr(sys, 'frozen', False) and os.path.isfile(os.path.join(HERE, 'gamedata', 'meta.json'))
                           else user_data_dir())
@@ -474,4 +543,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except BaseException:  # noqa: BLE001 - make startup failures visible in the windowed build
+        report_fatal(traceback.format_exc())
+        raise
