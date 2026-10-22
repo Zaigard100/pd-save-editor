@@ -189,6 +189,15 @@ def build(game, out_dir, logger=print):
                                'decal': t.get('DecalEnabled|B', True) is not False}
         if 'IP_Locked|:' in d:
             out['lockable'] = True
+        sec = d.get('IP_StatusEffectCondition|:')
+        if sec is not None:
+            out['seRules'] = {
+                'tags': (sec.get('AllowedEffectTags|:') or {}).get('GameplayTags|AT') or [],
+                'allowed': sec.get('AllowedEffects|A~') or [],
+                'ignore': sec.get('EffectIgnoreLIst|A^') or [],
+                'maxPer': dict(sec.get('MaxNumEffects|M^I') or []),
+                'maxTag': dict(sec.get('MaxEffectsPerTarget|MTI') or []),
+            }
         return out
 
     # ---------------------------------------------------------- items
@@ -392,7 +401,8 @@ def build(game, out_dir, logger=print):
                         'desc': loc.text(d.get('LogDescription') or (d.get('Description') if d.get('Title') else None)),
                         'icon': save_icon(paks, ref, 'SE_' + n, icons) if ref and 'PLACEHOLDER' not in ref else None,
                         'tint': under or tint, 'alert': (d.get('AlertLevel') or '').split('::')[-1],
-                        'upgrade': n.startswith('UP_')}
+                        'upgrade': n.startswith('UP_'),
+                        'tags': [x for x in (d.get('Tags') or []) if isinstance(x, str)]}
     log('effects:', len(effects), 'named:', sum(1 for e in effects.values() if e['name']))
 
     # ---------------------------------------------------------- paint / decal palettes

@@ -386,6 +386,7 @@ class Model:
             cls = eo.get('_class|^')
             effects.append({'guid': eg, 'cls': cls, 'data': eo.get('_data|*', {})})
         return {'guid': guid, 'arche': arche, 'fields': fields, 'effects': effects,
+                'allowedEffects': self.allowed_effects(arche, [e['cls'] for e in effects]),
                 'paint': tint.get('PaintPalette|^'), 'decal': tint.get('DecalPalette|^'),
                 'tintable': info.get('tintable'), 'context': d.get('CreateContext|N')}
 
@@ -435,10 +436,42 @@ class Model:
             self.remove_object(effect_guid)
         self.dirty = True
 
+    @staticmethod
+    def _tag_match(tag, allowed):
+        return tag == allowed or tag.startswith(allowed + '.')
+
+    def allowed_effects(self, arche, current=()):
+        """Status effects the game allows on this item (IP_StatusEffectCondition rules), respecting limits."""
+        rules = self.item_info(arche).get('seRules')
+        if not rules:
+            return []
+        effects = self.gd.get('effects', {})
+        out = []
+        for cls, e in effects.items():
+            if e.get('upgrade'):
+                continue
+            tags = e.get('tags') or []
+            ok = cls in rules['allowed'] or any(self._tag_match(t, a) for t in tags for a in rules['tags'])
+            if not ok or cls in rules['ignore']:
+                continue
+            if cls in rules['maxPer'] and sum(1 for c in current if c == cls) >= rules['maxPer'][cls]:
+                continue
+            full = False
+            for tag, n in rules['maxTag'].items():
+                if any(self._tag_match(t, tag) for t in tags):
+                    used = sum(1 for c in current if any(self._tag_match(t2, tag) for t2 in (effects.get(c, {}).get('tags') or [])))
+                    full = full or used >= n
+            if not full:
+                out.append(cls)
+        return out
+
     def add_effect(self, item_guid, cls):
         info = self.gd.get('effects', {}).get(cls)
         if not info or info.get('upgrade'):
             raise EditError('unknown effect %s' % cls)
+        view = self.instance_view(item_guid)
+        if cls not in view['allowedEffects']:
+            raise EditError('the game does not allow this effect on this item (or its limit is reached)')
         table = self.obj[item_guid][0]
         eg = self.new_guid()
         short = cls.rsplit('.', 1)[-1]

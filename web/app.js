@@ -49,6 +49,7 @@ const UI = {
     paint: 'Краска', decal: 'Декаль', none: '— нет —', toolbox: 'Ящик с инструментами', frame: 'Рамка',
     f_Durability: 'Прочность', f_Health: 'Состояние', f_Fatigue: 'Износ', f_Fuel: 'Топливо', f_BATTERY: 'Заряд',
     f_Battery: 'Заряд', f_CurrentCharge: 'Заряд станции', f_LockStrength: 'Замок',
+    no_effects: 'Игра не допускает новых эффектов для этого предмета (или лимит исчерпан).',
     repair: 'Починить', repair_all: 'Починить всё', effects: 'Эффекты', add_effect: '+ эффект…', hidden_eff: 'служебный',
     item_n: 'Предмет', not_stored: 'по умолчанию', part: 'Деталь', compatible: 'Подходящие детали', remove: 'Убрать',
     s_locked: 'Закрыто', s_available: 'Доступно', s_researched: 'Исследовано', s_installed: 'Установлено',
@@ -109,6 +110,7 @@ const UI = {
     paint: 'Paint', decal: 'Decal', none: '— none —', toolbox: 'Toolbox', frame: 'Frame',
     f_Durability: 'Durability', f_Health: 'Condition', f_Fatigue: 'Wear', f_Fuel: 'Fuel', f_BATTERY: 'Charge',
     f_Battery: 'Charge', f_CurrentCharge: 'Station charge', f_LockStrength: 'Lock',
+    no_effects: 'The game allows no further effects on this item (or the limit is reached).',
     repair: 'Repair', repair_all: 'Repair all', effects: 'Effects', add_effect: '+ effect…', hidden_eff: 'internal',
     item_n: 'Item', not_stored: 'default', part: 'Part', compatible: 'Compatible parts', remove: 'Remove',
     s_locked: 'Locked', s_available: 'Available', s_researched: 'Researched', s_installed: 'Installed',
@@ -536,11 +538,17 @@ function instanceEditor(inst, title) {
     more.onclick = () => { more.replaceWith(...hidden.map(([e, info]) => effectChip(inst, e, info))); };
     effs.append(more);
   }
-  const add = h('select', { class: 'add-effect' }, h('option', { value: '' }, t('add_effect')));
-  for (const [cls, info] of Object.entries(GD.effects || {}).filter(([, i]) => L(i.name) && !i.upgrade && i.alert !== 'Invisible')
-    .sort((a, b) => L(a[1].name).localeCompare(L(b[1].name), lang)))
-    add.append(h('option', { value: cls }, L(info.name)));
-  add.onchange = () => { if (add.value) quiet(api('effect_add', { item: inst.guid, cls: add.value })); };
+  // only effects the game allows on this item (IP_StatusEffectCondition), names de-duplicated
+  const seen = new Set();
+  const legal = (inst.allowedEffects || []).map(cls => [cls, (GD.effects || {})[cls] || {}])
+    .filter(([, i]) => L(i.name) && i.alert !== 'Invisible' && !seen.has(L(i.name)) && seen.add(L(i.name)))
+    .sort((a, b) => L(a[1].name).localeCompare(L(b[1].name), lang));
+  let add;
+  if (legal.length) {
+    add = h('select', { class: 'add-effect' }, h('option', { value: '' }, t('add_effect')));
+    for (const [cls, info] of legal) add.append(h('option', { value: cls, title: L(info.desc) }, L(info.name)));
+    add.onchange = () => { if (add.value) quiet(api('effect_add', { item: inst.guid, cls: add.value })); };
+  } else add = h('div', { class: 'hint' }, t('no_effects'));
   box.append(h('div', { class: 'effects-block' }, h('div', { class: 'fl' }, t('effects')), effs, add));
   return box;
 }
